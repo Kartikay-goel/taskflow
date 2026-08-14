@@ -311,9 +311,9 @@ function renderTasks() {
         titleRow.appendChild(titleEl);
         titleRow.appendChild(priorityBadge);
 
-        // Metadata Row with Due Soon Tag
+        // Metadata Row with Due Soon Tag (Only if task is NOT done)
         const metaEl = document.createElement('p');
-        const isDueSoon = checkDueSoon(task.due_date);
+        const isDueSoon = task.status !== 'done' && checkDueSoon(task.due_date);
         
         let metaHtml = `<span class="due-tag">Due: ${task.due_date || 'No date'}</span>`;
         if (isDueSoon) {
