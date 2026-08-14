@@ -8,6 +8,7 @@ let activeProjectId = null;
 let currentTasks = [];
 let currentFilter = 'all'; // 'all', 'active', 'completed'
 let currentSort = ''; // '', 'priority', 'due_date'
+let searchQuery = ''; // Tracks real-time keyword search filter
 
 // =========================================
 // DOM ELEMENTS
@@ -29,6 +30,7 @@ const createProjectBtn = document.getElementById('create-project-btn');
 const taskListContainer = document.getElementById('task-list-container');
 const titleError = document.getElementById('title-error');
 const sortPriorityBtn = document.getElementById('sort-priority-btn');
+const taskSearchInput = document.getElementById('task-search-input');
 
 // =========================================
 // INITIALIZATION
@@ -207,7 +209,7 @@ async function loadTasks() {
 }
 
 // =========================================
-// STRICT DOM RENDERING WITH TAB FILTERING & INLINE EDITING
+// STRICT DOM RENDERING WITH TAB FILTERING, SEARCH & PRIORITY TAGS
 // =========================================
 function renderTasks() {
     taskListContainer.innerHTML = '';
@@ -220,9 +222,14 @@ function renderTasks() {
         filteredTasks = currentTasks.filter(t => t.status === 'done');
     }
 
+    // Apply real-time keyword search filter
+    if (searchQuery) {
+        filteredTasks = filteredTasks.filter(t => t.title.toLowerCase().includes(searchQuery));
+    }
+
     if (filteredTasks.length === 0) {
         const emptyEl = document.createElement('p');
-        emptyEl.textContent = `No ${currentFilter} tasks found for this project.`;
+        emptyEl.textContent = searchQuery ? `No tasks matching "${searchQuery}" found.` : `No ${currentFilter} tasks found for this project.`;
         emptyEl.style.color = '#64748B';
         emptyEl.style.fontSize = '14px';
         taskListContainer.appendChild(emptyEl);
@@ -281,13 +288,16 @@ function renderTasks() {
             return; // Skip standard render for this item
         }
 
-        // Standard Display Mode
+        // Standard Display Mode with Priority Tags
         const titleEl = document.createElement('h4');
         titleEl.textContent = task.title;
 
         const metaEl = document.createElement('p');
         const formattedStatus = task.status === 'in_progress' ? 'In Progress' : task.status.toUpperCase();
-        metaEl.textContent = `Due: ${task.due_date || 'No date'} | Status: ${formattedStatus}`;
+        const formattedPriority = task.priority ? task.priority.toUpperCase() : 'MEDIUM';
+        
+        // Displays Due Date, Priority Tag, and Status clearly on the card
+        metaEl.textContent = `Due: ${task.due_date || 'No date'} | Priority: ${formattedPriority} | Status: ${formattedStatus}`;
 
         contentDiv.appendChild(titleEl);
         contentDiv.appendChild(metaEl);
@@ -376,48 +386,6 @@ addTaskForm.addEventListener('submit', async (e) => {
     loadProjectStats();
 });
 
-// =========================================
-// AI QUICK-ADD LOGIC (Commit #2)
-// =========================================
-const quickAddForm = document.getElementById('quick-add-form');
-const quickAddInput = document.getElementById('quick-add-input');
-
-if (quickAddForm) {
-    quickAddForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const text = quickAddInput.value.trim();
-        
-        if (!text) {
-            alert("Please type something for Magic Add.");
-            return;
-        }
-        
-        if (!activeProjectId) {
-            alert("Please select or create a project first.");
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_BASE}/tasks/quick-add`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    text: text,
-                    project_id: parseInt(activeProjectId)
-                })
-            });
-
-            if (!response.ok) throw new Error("Failed to quick-add task");
-
-            quickAddInput.value = '';
-            loadTasks();
-            loadProjectStats();
-        } catch (err) {
-            alert(err.message);
-        }
-    });
-}
-
 async function markTaskDone(task) {
     await fetch(`${API_BASE}/tasks/${task.id}`, {
         method: 'PUT',
@@ -466,7 +434,7 @@ async function deleteTask(taskId) {
 }
 
 // =========================================
-// EVENT LISTENERS (Tabs & Sorting)
+// EVENT LISTENERS (Tabs, Sorting & Real-Time Search)
 // =========================================
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -492,6 +460,13 @@ if (sortPriorityBtn) {
             sortPriorityBtn.style.borderColor = 'var(--border-color)';
         }
         loadTasks();
+    });
+}
+
+if (taskSearchInput) {
+    taskSearchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value.toLowerCase().trim();
+        renderTasks();
     });
 }
 
