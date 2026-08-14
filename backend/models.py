@@ -9,10 +9,9 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, nullable=False, index=True)
     name = Column(String, nullable=False)
+    password = Column(String, nullable=False) # <--- NEW COLUMN
     
-    # Relationship to Project
     projects = relationship("Project", back_populates="owner")
-
 class Project(Base):
     __tablename__ = "projects"
 

@@ -26,8 +26,9 @@ def create_project(project: schemas.ProjectCreate, db: Session = Depends(get_db)
     return db_project
 
 @router.get("", response_model=List[schemas.ProjectResponse], status_code=status.HTTP_200_OK)
-def list_projects(db: Session = Depends(get_db)):
-    return db.query(models.Project).all()
+def list_projects(owner_id: int, db: Session = Depends(get_db)):
+    # This guarantees a user only gets projects where they are the owner
+    return db.query(models.Project).filter(models.Project.owner_id == owner_id).all()
 
 @router.get("/{project_id}/stats", response_model=schemas.ProjectStatsResponse, status_code=status.HTTP_200_OK)
 def get_project_stats(project_id: int, db: Session = Depends(get_db)):
