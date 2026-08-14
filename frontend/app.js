@@ -376,6 +376,48 @@ addTaskForm.addEventListener('submit', async (e) => {
     loadProjectStats();
 });
 
+// =========================================
+// AI QUICK-ADD LOGIC (Commit #2)
+// =========================================
+const quickAddForm = document.getElementById('quick-add-form');
+const quickAddInput = document.getElementById('quick-add-input');
+
+if (quickAddForm) {
+    quickAddForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = quickAddInput.value.trim();
+        
+        if (!text) {
+            alert("Please type something for Magic Add.");
+            return;
+        }
+        
+        if (!activeProjectId) {
+            alert("Please select or create a project first.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/tasks/quick-add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: text,
+                    project_id: parseInt(activeProjectId)
+                })
+            });
+
+            if (!response.ok) throw new Error("Failed to quick-add task");
+
+            quickAddInput.value = '';
+            loadTasks();
+            loadProjectStats();
+        } catch (err) {
+            alert(err.message);
+        }
+    });
+}
+
 async function markTaskDone(task) {
     await fetch(`${API_BASE}/tasks/${task.id}`, {
         method: 'PUT',
