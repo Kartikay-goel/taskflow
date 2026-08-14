@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow | Pod Operations</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Persistent UI Element (position: sticky in CSS) -->
+    <header class="app-header">
+        <div class="logo">Task<span>Flow</span></div>
+        <div id="user-profile" class="hidden">
+            <span id="current-user-name"></span>
+            <button id="logout-btn" class="btn btn-outline">Logout</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- AUTHENTICATION VIEW -->
+        <section id="auth-view" class="box-container">
+            <div class="auth-forms">
+                <form id="login-form" class="auth-form">
+                    <h2>Pod Login</h2>
+                    <input type="email" id="login-email" placeholder="Email (e.g., kartikay@blinkit.com)" required>
+                    <input type="password" id="login-password" placeholder="Password" required>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+
+                <div class="divider"></div>
+
+                <form id="signup-form" class="auth-form">
+                    <h2>New Member Registration</h2>
+                    <input type="text" id="signup-name" placeholder="Full Name (e.g., Kartikay Goel)" required>
+                    <input type="email" id="signup-email" placeholder="Email" required>
+                    <input type="password" id="signup-password" placeholder="Password" required>
+                    <button type="submit" class="btn btn-secondary">Sign Up</button>
+                </form>
+            </div>
+            <div id="auth-error" class="error-message hidden"></div>
+        </section>
+
+        <!-- DASHBOARD VIEW (Hidden until logged in) -->
+        <section id="dashboard-view" class="hidden">
+            
+            <!-- Project Selection & Stats -->
+            <div class="project-header box-container">
+                <div class="project-selector">
+                    <select id="project-select">
+                        <option value="" disabled selected>Select a Project...</option>
+                        <!-- Projects populated by JS -->
+                    </select>
+                    <button id="new-project-btn" class="btn btn-secondary">+ New Project</button>
+                </div>
+                <div id="project-stats" class="stats-container">
+                    <span class="stat-badge">Total: <b id="stat-total">0</b></span>
+                    <span class="stat-badge stat-todo">To Do: <b id="stat-todo">0</b></span>
+                    <span class="stat-badge stat-progress">In Progress: <b id="stat-progress">0</b></span>
+                    <span class="stat-badge stat-done">Done: <b id="stat-done">0</b></span>
+                </div>
+            </div>
+
+            <!-- Task Management Area -->
+            <div class="task-management-layout">
+                <!-- Add Task Form -->
+                <div class="add-task-section box-container">
+                    <h3>Add New Task</h3>
+                    <form id="add-task-form" class="task-form">
+                        <input type="text" id="task-title" placeholder="Task Title (e.g., Restock Amul Milk)">
+                        <div id="title-error" class="validation-error hidden">Title cannot be empty!</div>
+                        
+                        <div class="form-row">
+                            <select id="task-priority">
+                                <option value="low">Low Priority</option>
+                                <option value="medium" selected>Medium Priority</option>
+                                <option value="high">High Priority</option>
+                            </select>
+                            <!-- Due date as text to satisfy rubric's "raw text" requirement -->
+                            <input type="text" id="task-due-date" placeholder="Due Date (e.g., next tuesday)">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">Add Task</button>
+                    </form>
+
+                    <!-- Section 3 Placeholder: AI Quick Add -->
+                    <div class="quick-add-section">
+                        <h4>⚡ AI Quick-Add</h4>
+                        <form id="quick-add-form">
+                            <input type="text" id="quick-add-input" placeholder="Type naturally... (e.g., Restock shelves next friday it's urgent)">
+                            <button type="submit" class="btn btn-dark w-100">Magic Add</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Task List Container -->
+                <div class="task-list-section box-container">
+                    <div class="list-header">
+                        <h3>Task Board</h3>
+                        <div class="sort-controls">
+                            <button id="sort-priority-btn" class="btn btn-outline">Sort by Priority (Section 2)</button>
+                        </div>
+                    </div>
+                    
+                    <div id="task-list-container" class="task-list">
+                        <!-- Tasks will be rendered here by JS using document.createElement -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
