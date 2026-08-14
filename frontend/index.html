@@ -10,9 +10,9 @@
     <!-- Persistent Header -->
     <header class="app-header">
         <div class="logo">Task<span>Flow</span> <small class="logo-sub">Blinkit Pods</small></div>
-        <div id="user-profile" class="hidden">
-            <span id="current-user-name"></span>
-            <button id="logout-btn" class="btn btn-outline">Logout</button>
+        <div id="user-profile" class="hidden" style="display: flex; gap: 12px; align-items: center;">
+            <span id="current-user-name" style="font-weight: 600; font-size: 14px;"></span>
+            <button id="logout-btn" class="btn btn-outline" style="padding: 6px 12px;">Logout</button>
         </div>
     </header>
 
@@ -24,7 +24,7 @@
                 <div class="auth-forms">
                     <form id="login-form" class="auth-form">
                         <h2>Pod Login</h2>
-                        <input type="email" id="login-email" placeholder="Email (e.g., kartikay@blinkit.com)" required>
+                        <input type="email" id="login-email" placeholder="Email Address" required>
                         <input type="password" id="login-password" placeholder="Password" required>
                         <button type="submit" class="btn btn-primary w-100">Login</button>
                     </form>
@@ -58,7 +58,7 @@
                     
                     <!-- Inline Project Creation Box -->
                     <div class="inline-project-create">
-                        <label class="field-label" style="visibility: hidden;">Action</label>
+                        <label class="field-label">New Project</label>
                         <div class="create-input-row">
                             <input type="text" id="new-project-input" placeholder="New project name...">
                             <button id="create-project-btn" class="btn btn-primary">+ Create & Open</button>
@@ -68,7 +68,7 @@
 
                 <!-- Modern Stats Badges -->
                 <div id="project-stats" class="stats-container">
-                    <div class="stat-card stat-total">
+                    <div class="stat-card">
                         <span class="stat-label">Total</span>
                         <span class="stat-value" id="stat-total">0</span>
                     </div>
@@ -94,7 +94,7 @@
                     <h3>Add New Task</h3>
                     <form id="add-task-form" class="task-form">
                         <input type="text" id="task-title" placeholder="Task Title (e.g., Restock Amul Milk)">
-                        <div id="title-error" class="validation-error hidden">Title cannot be empty!</div>
+                        <div id="title-error" class="error-message hidden">Title cannot be empty!</div>
                         
                         <div class="form-row">
                             <select id="task-priority">
@@ -122,9 +122,15 @@
                 <div class="task-list-section box-container">
                     <div class="list-header">
                         <h3>Task Board</h3>
-                        <div class="sort-controls" style="display: flex; gap: 10px; align-items: center;">
-                            <input type="text" id="task-search-input" placeholder="Search tasks..." style="padding: 6px 12px; font-size: 13px; max-width: 180px; border: 1px solid #cbd5e1; border-radius: 6px;">
-                            <button id="sort-priority-btn" class="btn btn-outline">Sort by Priority</button>
+                        <div class="search-sort-group" style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="task-search-input" placeholder="Search tasks..." style="padding: 8px 12px; font-size: 13px; max-width: 185px; margin-bottom: 0;">
+                            
+                            <!-- Sorting Dropdown Menu -->
+                            <select id="sort-select" style="padding: 8px 12px; font-size: 13px; max-width: 175px; margin-bottom: 0;">
+                                <option value="">Sort: Default</option>
+                                <option value="priority">Priority (High-Low)</option>
+                                <option value="due_date">Due Date</option>
+                            </select>
                         </div>
                     </div>
                     

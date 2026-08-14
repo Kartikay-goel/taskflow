@@ -360,6 +360,41 @@ input:focus, select:focus {
     color: var(--text-muted);
 }
 
+/* Priority Badge Bubble next to Task Title */
+.priority-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+.badge-high { background-color: var(--p-high-bg); color: var(--p-high-text); border: 1px solid var(--p-high-border); }
+.badge-medium { background-color: var(--p-med-bg); color: var(--p-med-text); border: 1px solid var(--p-med-border); }
+.badge-low { background-color: var(--p-low-bg); color: var(--p-low-text); border: 1px solid var(--p-low-border); }
+
+/* Due Date & Urgency Tags */
+.due-tag {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    background: #F1F5F9;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    margin-right: 6px;
+}
+
+.due-tag.urgent {
+    background-color: var(--p-high-bg);
+    color: var(--p-high-text);
+    border-color: var(--p-high-border);
+    font-weight: 700;
+}
+
 .task-edit-input {
     width: 100%;
     padding: 8px 12px;
