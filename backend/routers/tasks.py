@@ -102,7 +102,7 @@ def parse_natural_language_task(text: str):
         "status": "todo"
     }
 
-@router.post("/tasks/quick-add")
+@router.post("/quick-add")
 def quick_add_task(data: dict, db: Session = Depends(get_db)):
     raw_text = data.get("text", "")
     project_id = data.get("project_id")
@@ -112,7 +112,7 @@ def quick_add_task(data: dict, db: Session = Depends(get_db)):
         
     parsed_data = parse_natural_language_task(raw_text)
     
-    new_task = Task(
+    new_task = models.Task(
         title=parsed_data["title"],
         priority=parsed_data["priority"],
         due_date=parsed_data["due_date"],
