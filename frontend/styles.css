@@ -234,3 +234,16 @@ input:focus, select:focus {
         gap: 0;
     }
 }
+
+/* =========================================
+   FOOTER
+========================================= */
+.app-footer {
+    text-align: center;
+    margin-top: 32px;
+    padding: 16px;
+    color: #666666;
+    font-size: 14px;
+    background-color: transparent;
+    border-color: transparent;
+}
