@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-
+from datetime import datetime, timedelta
 from backend.database import get_db
 from backend import models, schemas
+import re
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
@@ -64,3 +65,61 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     db.delete(db_task)
     db.commit()
     return {"message": "Task deleted successfully"}
+
+
+def parse_natural_language_task(text: str):
+    priority = "medium"
+    due_date = None
+    
+    # 1. Detect Priority
+    lower_text = text.lower()
+    if "high" in lower_text or "urgent" in lower_text or "asap" in lower_text:
+        priority = "high"
+        text = re.sub(r'\b(high|urgent|asap)\b', '', text, flags=re.IGNORECASE)
+    elif "low" in lower_text:
+        priority = "low"
+        text = re.sub(r'\b(low)\b', '', text, flags=re.IGNORECASE)
+        
+    # 2. Detect Due Date Hints
+    today = datetime.now()
+    if "tomorrow" in lower_text:
+        due_date = (today + timedelta(days=1)).strftime("%Y-%m-%d")
+        text = re.sub(r'\b(tomorrow)\b', '', text, flags=re.IGNORECASE)
+    elif "today" in lower_text:
+        due_date = today.strftime("%Y-%m-%d")
+        text = re.sub(r'\b(today)\b', '', text, flags=re.IGNORECASE)
+    elif "next week" in lower_text:
+        due_date = (today + timedelta(days=7)).strftime("%Y-%m-%d")
+        text = re.sub(r'\b(next week)\b', '', text, flags=re.IGNORECASE)
+
+    # Clean up leftover spacing
+    clean_title = re.sub(r'\s+', ' ', text).strip()
+    
+    return {
+        "title": clean_title or "Quick Task",
+        "priority": priority,
+        "due_date": due_date,
+        "status": "todo"
+    }
+
+@router.post("/tasks/quick-add")
+def quick_add_task(data: dict, db: Session = Depends(get_db)):
+    raw_text = data.get("text", "")
+    project_id = data.get("project_id")
+    
+    if not raw_text or not project_id:
+        raise HTTPException(status_code=400, detail="Text and project_id are required")
+        
+    parsed_data = parse_natural_language_task(raw_text)
+    
+    new_task = Task(
+        title=parsed_data["title"],
+        priority=parsed_data["priority"],
+        due_date=parsed_data["due_date"],
+        status=parsed_data["status"],
+        project_id=project_id
+    )
+    db.add(new_task)
+    db.commit()
+    db.refresh(new_task)
+    return new_task
