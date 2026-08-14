@@ -29,7 +29,7 @@ const createProjectBtn = document.getElementById('create-project-btn');
 
 const taskListContainer = document.getElementById('task-list-container');
 const titleError = document.getElementById('title-error');
-const sortPriorityBtn = document.getElementById('sort-priority-btn');
+const sortSelect = document.getElementById('sort-select');
 const taskSearchInput = document.getElementById('task-search-input');
 
 // =========================================
@@ -208,13 +208,22 @@ async function loadTasks() {
     renderTasks();
 }
 
+// Helper function to check if due date is within the next 2 days (anchored to 2026-08-15)
+function checkDueSoon(dueDateStr) {
+    if (!dueDateStr) return false;
+    const today = new Date('2026-08-15');
+    const due = new Date(dueDateStr);
+    const diffTime = due - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 && diffDays <= 2;
+}
+
 // =========================================
-// STRICT DOM RENDERING WITH TAB FILTERING, SEARCH & PRIORITY TAGS
+// STRICT DOM RENDERING
 // =========================================
 function renderTasks() {
     taskListContainer.innerHTML = '';
 
-    // Filter tasks based on selected tab filter
     let filteredTasks = currentTasks;
     if (currentFilter === 'active') {
         filteredTasks = currentTasks.filter(t => t.status !== 'done');
@@ -222,7 +231,6 @@ function renderTasks() {
         filteredTasks = currentTasks.filter(t => t.status === 'done');
     }
 
-    // Apply real-time keyword search filter
     if (searchQuery) {
         filteredTasks = filteredTasks.filter(t => t.title.toLowerCase().includes(searchQuery));
     }
@@ -230,8 +238,8 @@ function renderTasks() {
     if (filteredTasks.length === 0) {
         const emptyEl = document.createElement('p');
         emptyEl.textContent = searchQuery ? `No tasks matching "${searchQuery}" found.` : `No ${currentFilter} tasks found for this project.`;
-        emptyEl.style.color = '#64748B';
-        emptyEl.style.fontSize = '14px';
+        emptyEl.style.color = 'var(--text-muted)';
+        emptyEl.style.fontSize = '13px';
         taskListContainer.appendChild(emptyEl);
         return;
     }
@@ -239,12 +247,12 @@ function renderTasks() {
     filteredTasks.forEach(task => {
         const taskEl = document.createElement('div');
         const statusClass = task.status === 'done' ? 'status-done' : '';
-        taskEl.className = `task-item priority-${task.priority} ${statusClass}`;
+        const priorityClass = `priority-${task.priority || 'medium'}`;
+        taskEl.className = `task-item ${priorityClass} ${statusClass}`;
 
         const contentDiv = document.createElement('div');
         contentDiv.style.flex = '1';
 
-        // Check if this specific task is currently in inline edit mode
         if (task.isEditing) {
             const editInput = document.createElement('input');
             editInput.type = 'text';
@@ -257,11 +265,6 @@ function renderTasks() {
             editDateInput.className = 'task-edit-date';
             editDateInput.value = task.due_date || '';
             contentDiv.appendChild(editDateInput);
-
-            const metaEl = document.createElement('p');
-            const formattedStatus = task.status === 'in_progress' ? 'In Progress' : task.status.toUpperCase();
-            metaEl.textContent = `Status: ${formattedStatus}`;
-            contentDiv.appendChild(metaEl);
 
             const actionsDiv = document.createElement('div');
             actionsDiv.className = 'task-actions';
@@ -285,21 +288,42 @@ function renderTasks() {
             taskEl.appendChild(contentDiv);
             taskEl.appendChild(actionsDiv);
             taskListContainer.appendChild(taskEl);
-            return; // Skip standard render for this item
+            return;
         }
 
-        // Standard Display Mode with Priority Tags
+        // Title Row with Priority Badge Bubble placed right next to title
+        const titleRow = document.createElement('div');
+        titleRow.style.display = 'flex';
+        titleRow.style.alignItems = 'center';
+        titleRow.style.flexWrap = 'wrap';
+        titleRow.style.gap = '8px';
+        titleRow.style.marginBottom = '4px';
+
         const titleEl = document.createElement('h4');
         titleEl.textContent = task.title;
+        titleEl.style.margin = '0';
 
+        const priorityBadge = document.createElement('span');
+        const priorityVal = task.priority ? task.priority.toLowerCase() : 'medium';
+        priorityBadge.textContent = priorityVal.toUpperCase();
+        priorityBadge.className = `priority-badge badge-${priorityVal}`;
+
+        titleRow.appendChild(titleEl);
+        titleRow.appendChild(priorityBadge);
+
+        // Metadata Row with Due Soon Tag
         const metaEl = document.createElement('p');
-        const formattedStatus = task.status === 'in_progress' ? 'In Progress' : task.status.toUpperCase();
-        const formattedPriority = task.priority ? task.priority.toUpperCase() : 'MEDIUM';
+        const isDueSoon = checkDueSoon(task.due_date);
         
-        // Displays Due Date, Priority Tag, and Status clearly on the card
-        metaEl.textContent = `Due: ${task.due_date || 'No date'} | Priority: ${formattedPriority} | Status: ${formattedStatus}`;
+        let metaHtml = `<span class="due-tag">Due: ${task.due_date || 'No date'}</span>`;
+        if (isDueSoon) {
+            metaHtml += `<span class="due-tag urgent">⚠️ Due Soon!</span>`;
+        }
+        const formattedStatus = task.status === 'in_progress' ? 'In Progress' : task.status.toUpperCase();
+        metaHtml += ` | Status: ${formattedStatus}`;
+        metaEl.innerHTML = metaHtml;
 
-        contentDiv.appendChild(titleEl);
+        contentDiv.appendChild(titleRow);
         contentDiv.appendChild(metaEl);
 
         const actionsDiv = document.createElement('div');
@@ -308,18 +332,17 @@ function renderTasks() {
         if (task.status !== 'done') {
             const doneBtn = document.createElement('button');
             doneBtn.className = 'btn btn-secondary';
-            doneBtn.textContent = '✓ Done';
+            doneBtn.textContent = 'Mark as Done';
             doneBtn.addEventListener('click', () => markTaskDone(task));
             actionsDiv.appendChild(doneBtn);
         } else {
             const reopenBtn = document.createElement('button');
             reopenBtn.className = 'btn btn-outline';
-            reopenBtn.textContent = '↺ Reopen';
+            reopenBtn.textContent = 'Reopen';
             reopenBtn.addEventListener('click', () => markTaskReopened(task));
             actionsDiv.appendChild(reopenBtn);
         }
 
-        // Only allow editing active tasks
         if (task.status !== 'done') {
             const editBtn = document.createElement('button');
             editBtn.className = 'btn btn-outline';
@@ -340,7 +363,6 @@ function renderTasks() {
 
         taskEl.appendChild(contentDiv);
         taskEl.appendChild(actionsDiv);
-
         taskListContainer.appendChild(taskEl);
     });
 }
@@ -385,6 +407,45 @@ addTaskForm.addEventListener('submit', async (e) => {
     loadTasks();
     loadProjectStats();
 });
+
+const quickAddForm = document.getElementById('quick-add-form');
+const quickAddInput = document.getElementById('quick-add-input');
+
+if (quickAddForm) {
+    quickAddForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = quickAddInput.value.trim();
+        
+        if (!text) {
+            alert("Please type something for Magic Add.");
+            return;
+        }
+        
+        if (!activeProjectId) {
+            alert("Please select or create a project first.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/tasks/quick-add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: text,
+                    project_id: parseInt(activeProjectId)
+                })
+            });
+
+            if (!response.ok) throw new Error("Failed to quick-add task");
+
+            quickAddInput.value = '';
+            loadTasks();
+            loadProjectStats();
+        } catch (err) {
+            alert(err.message);
+        }
+    });
+}
 
 async function markTaskDone(task) {
     await fetch(`${API_BASE}/tasks/${task.id}`, {
@@ -434,7 +495,7 @@ async function deleteTask(taskId) {
 }
 
 // =========================================
-// EVENT LISTENERS (Tabs, Sorting & Real-Time Search)
+// EVENT LISTENERS
 // =========================================
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -445,20 +506,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     });
 });
 
-if (sortPriorityBtn) {
-    sortPriorityBtn.addEventListener('click', () => {
-        if (currentSort === '') {
-            currentSort = 'priority';
-            sortPriorityBtn.textContent = 'Sorted: Priority (O(N log N))';
-            sortPriorityBtn.style.borderColor = 'var(--secondary)';
-        } else if (currentSort === 'priority') {
-            currentSort = 'due_date';
-            sortPriorityBtn.textContent = 'Sorted: Due Date';
-        } else {
-            currentSort = '';
-            sortPriorityBtn.textContent = 'Sort by Priority';
-            sortPriorityBtn.style.borderColor = 'var(--border-color)';
-        }
+if (sortSelect) {
+    sortSelect.addEventListener('change', (e) => {
+        currentSort = e.target.value;
         loadTasks();
     });
 }
