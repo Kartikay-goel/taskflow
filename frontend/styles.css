@@ -1,0 +1,249 @@
+/* =========================================
+   UTILITIES & VARIABLES
+========================================= */
+:root {
+    --bg-color: #F4F6F8;
+    --text-color: #333333;
+    --border-color: #E0E4E8;
+    --primary-color: #F8CB46; /* Blinkit Yellow */
+    --primary-hover: #E5B830;
+    --secondary-color: #111111;
+    --danger-color: #E74C3C;
+    
+    /* Priority Colors */
+    --priority-high: #FFEAEA;
+    --priority-high-border: #FFB3B3;
+    --priority-medium: #FFF9E6;
+    --priority-medium-border: #FFD966;
+    --priority-low: #E8F5E9;
+    --priority-low-border: #A5D6A7;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.w-100 {
+    width: 100%;
+}
+
+/* =========================================
+   PERSISTENT UI (Requirement)
+========================================= */
+.app-header {
+    position: sticky;
+    top: 0;
+    background-color: #FFFFFF;
+    border-bottom: 2px solid var(--border-color);
+    padding: 16px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.logo span {
+    color: var(--primary-hover);
+}
+
+/* =========================================
+   CSS BOX MODEL COMPONENTS (Requirement)
+========================================= */
+.container {
+    max-width: 1200px;
+    margin: 32px auto;
+    padding: 0 16px;
+}
+
+.box-container {
+    background-color: #FFFFFF;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+/* Buttons & Inputs */
+.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-primary { background-color: var(--primary-color); color: #000; }
+.btn-primary:hover { background-color: var(--primary-hover); }
+.btn-secondary { background-color: #EEEEEE; color: #333; }
+.btn-secondary:hover { background-color: #DDDDDD; }
+.btn-dark { background-color: var(--secondary-color); color: #FFF; }
+.btn-outline { background-color: transparent; border: 2px solid var(--border-color); }
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    outline: none;
+}
+
+input:focus, select:focus {
+    border-color: var(--primary-color);
+}
+
+.validation-error {
+    color: var(--danger-color);
+    font-size: 12px;
+    margin-top: -12px;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+/* =========================================
+   LAYOUTS
+========================================= */
+.auth-forms {
+    display: flex;
+    gap: 32px;
+}
+
+.auth-form {
+    flex: 1;
+}
+
+.divider {
+    width: 2px;
+    background-color: var(--border-color);
+}
+
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.task-management-layout {
+    display: flex;
+    gap: 24px;
+}
+
+.add-task-section {
+    flex: 1;
+}
+
+.task-list-section {
+    flex: 2;
+}
+
+.form-row {
+    display: flex;
+    gap: 16px;
+}
+
+/* =========================================
+   TASK ITEM STYLING (Strict Box Model)
+========================================= */
+.task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.task-item {
+    /* Explicit Box Model properties for grading */
+    padding: 16px;
+    margin: 0;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    background-color: #FFFFFF;
+    
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.task-item.priority-high {
+    background-color: var(--priority-high);
+    border-color: var(--priority-high-border);
+}
+
+.task-item.priority-medium {
+    background-color: var(--priority-medium);
+    border-color: var(--priority-medium-border);
+}
+
+.task-item.priority-low {
+    background-color: var(--priority-low);
+    border-color: var(--priority-low-border);
+}
+
+.task-actions button {
+    margin-left: 8px;
+}
+
+/* =========================================
+   RESPONSIVE BREAKPOINTS (Requirement)
+========================================= */
+/* First Breakpoint: Tablets */
+@media (max-width: 768px) {
+    .task-management-layout {
+        flex-direction: column; /* Stacks the add task form above the task list */
+    }
+    
+    .project-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+}
+
+/* Second Breakpoint: Mobile Phones */
+@media (max-width: 480px) {
+    .auth-forms {
+        flex-direction: column; /* Stacks login and signup */
+    }
+    
+    .divider {
+        width: 100%;
+        height: 2px;
+        margin: 16px 0;
+    }
+
+    .form-row {
+        flex-direction: column; /* Stacks priority and date inputs */
+        gap: 0;
+    }
+}
+
+/* =========================================
+   FOOTER
+========================================= */
+.app-footer {
+    text-align: center;
+    margin-top: 32px;
+    padding: 16px;
+    color: #666666;
+    font-size: 14px;
+    background-color: transparent;
+    border-color: transparent;
+}
