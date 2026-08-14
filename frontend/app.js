@@ -7,6 +7,7 @@ let activeUserName = localStorage.getItem('loggedInUserName');
 let activeProjectId = null;
 let currentTasks = [];
 let currentFilter = 'all'; // 'all', 'active', 'completed'
+let currentSort = ''; // '', 'priority', 'due_date'
 
 // =========================================
 // DOM ELEMENTS
@@ -27,6 +28,7 @@ const createProjectBtn = document.getElementById('create-project-btn');
 
 const taskListContainer = document.getElementById('task-list-container');
 const titleError = document.getElementById('title-error');
+const sortPriorityBtn = document.getElementById('sort-priority-btn');
 
 // =========================================
 // INITIALIZATION
@@ -186,21 +188,20 @@ async function loadProjectStats() {
 }
 
 // =========================================
-// TASK LOGIC & CACHING
+// TASK LOGIC, CACHING & SORTING ALGORITHM
 // =========================================
 async function loadTasks() {
     if (!activeProjectId) return;
 
-    const cacheKey = `tasks_project_${activeProjectId}`;
-    const cachedTasks = localStorage.getItem(cacheKey);
-    if (cachedTasks) {
-        currentTasks = JSON.parse(cachedTasks);
-        renderTasks();
+    let url = `${API_BASE}/tasks?project_id=${activeProjectId}`;
+    if (currentSort) {
+        url += `&sort_by=${currentSort}`;
     }
 
-    const response = await fetch(`${API_BASE}/tasks?project_id=${activeProjectId}`);
+    const response = await fetch(url);
     currentTasks = await response.json();
     
+    const cacheKey = `tasks_project_${activeProjectId}`;
     localStorage.setItem(cacheKey, JSON.stringify(currentTasks));
     renderTasks();
 }
@@ -308,7 +309,7 @@ function renderTasks() {
             actionsDiv.appendChild(reopenBtn);
         }
 
-        // Only allow editing active tasks (completed tasks must be reopened first)
+        // Only allow editing active tasks
         if (task.status !== 'done') {
             const editBtn = document.createElement('button');
             editBtn.className = 'btn btn-outline';
@@ -465,7 +466,7 @@ async function deleteTask(taskId) {
 }
 
 // =========================================
-// TAB FILTER LISTENERS
+// EVENT LISTENERS (Tabs & Sorting)
 // =========================================
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -475,6 +476,24 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         renderTasks();
     });
 });
+
+if (sortPriorityBtn) {
+    sortPriorityBtn.addEventListener('click', () => {
+        if (currentSort === '') {
+            currentSort = 'priority';
+            sortPriorityBtn.textContent = 'Sorted: Priority (O(N log N))';
+            sortPriorityBtn.style.borderColor = 'var(--secondary)';
+        } else if (currentSort === 'priority') {
+            currentSort = 'due_date';
+            sortPriorityBtn.textContent = 'Sorted: Due Date';
+        } else {
+            currentSort = '';
+            sortPriorityBtn.textContent = 'Sort by Priority';
+            sortPriorityBtn.style.borderColor = 'var(--border-color)';
+        }
+        loadTasks();
+    });
+}
 
 // Start Application
 init();

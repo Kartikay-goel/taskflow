@@ -8,9 +8,11 @@ import re
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
+# Priority weight mapping for custom sorting algorithm
+PRIORITY_WEIGHTS = {"high": 1, "medium": 2, "low": 3}
+
 @router.post("", response_model=schemas.TaskResponse, status_code=status.HTTP_201_CREATED)
 def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
-    # Verify project exists
     project = db.query(models.Project).filter(models.Project.id == task.project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -29,11 +31,20 @@ def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
     return db_task
 
 @router.get("", response_model=List[schemas.TaskResponse], status_code=status.HTTP_200_OK)
-def list_tasks(project_id: int = None, db: Session = Depends(get_db)):
+def list_tasks(project_id: int = None, sort_by: str = None, db: Session = Depends(get_db)):
     query = db.query(models.Task)
     if project_id:
         query = query.filter(models.Task.project_id == project_id)
-    return query.all()
+    
+    tasks = query.all()
+    
+    # Custom Algorithmic Sorting Engine O(N log N)
+    if sort_by == "priority":
+        tasks.sort(key=lambda t: PRIORITY_WEIGHTS.get(t.priority, 4))
+    elif sort_by == "due_date":
+        tasks.sort(key=lambda t: t.due_date if t.due_date else "9999-12-31")
+        
+    return tasks
 
 @router.get("/{task_id}", response_model=schemas.TaskResponse, status_code=status.HTTP_200_OK)
 def get_task(task_id: int, db: Session = Depends(get_db)):
@@ -66,12 +77,11 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Task deleted successfully"}
 
-
+# --- Natural Language Processing Helper for AI Quick-Add ---
 def parse_natural_language_task(text: str):
     priority = "medium"
     due_date = None
     
-    # 1. Detect Priority
     lower_text = text.lower()
     if "high" in lower_text or "urgent" in lower_text or "asap" in lower_text:
         priority = "high"
@@ -80,7 +90,6 @@ def parse_natural_language_task(text: str):
         priority = "low"
         text = re.sub(r'\b(low)\b', '', text, flags=re.IGNORECASE)
         
-    # 2. Detect Due Date Hints
     today = datetime.now()
     if "tomorrow" in lower_text:
         due_date = (today + timedelta(days=1)).strftime("%Y-%m-%d")
@@ -92,7 +101,6 @@ def parse_natural_language_task(text: str):
         due_date = (today + timedelta(days=7)).strftime("%Y-%m-%d")
         text = re.sub(r'\b(next week)\b', '', text, flags=re.IGNORECASE)
 
-    # Clean up leftover spacing
     clean_title = re.sub(r'\s+', ' ', text).strip()
     
     return {
@@ -102,7 +110,7 @@ def parse_natural_language_task(text: str):
         "status": "todo"
     }
 
-@router.post("/quick-add")
+@router.post("/quick-add", response_model=schemas.TaskResponse, status_code=status.HTTP_201_CREATED)
 def quick_add_task(data: dict, db: Session = Depends(get_db)):
     raw_text = data.get("text", "")
     project_id = data.get("project_id")
