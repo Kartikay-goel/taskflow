@@ -5,6 +5,8 @@ const API_BASE = 'http://127.0.0.1:8000';
 let activeUserId = localStorage.getItem('loggedInUserId');
 let activeUserName = localStorage.getItem('loggedInUserName');
 let activeProjectId = null;
+let currentTasks = [];
+let currentFilter = 'all'; // 'all', 'active', 'completed'
 
 // =========================================
 // DOM ELEMENTS
@@ -135,7 +137,6 @@ async function loadProjects(selectNewId = null) {
         loadTasks();
         loadProjectStats();
     } else if (projects.length > 0 && !activeProjectId) {
-        // Default to first project if none selected
         projectSelect.value = projects[0].id;
         activeProjectId = projects[0].id;
         loadTasks();
@@ -143,7 +144,6 @@ async function loadProjects(selectNewId = null) {
     }
 }
 
-// Inline Project Creation Handler (Requirement 1)
 createProjectBtn.addEventListener('click', async () => {
     const name = newProjectInput.value.trim();
     if (!name) {
@@ -162,7 +162,6 @@ createProjectBtn.addEventListener('click', async () => {
         const newProject = await response.json();
         
         newProjectInput.value = '';
-        // Reload projects and automatically jump inside the newly created project
         await loadProjects(newProject.id);
     } catch (err) {
         alert(err.message);
@@ -195,42 +194,99 @@ async function loadTasks() {
     const cacheKey = `tasks_project_${activeProjectId}`;
     const cachedTasks = localStorage.getItem(cacheKey);
     if (cachedTasks) {
-        renderTasks(JSON.parse(cachedTasks));
+        currentTasks = JSON.parse(cachedTasks);
+        renderTasks();
     }
 
     const response = await fetch(`${API_BASE}/tasks?project_id=${activeProjectId}`);
-    const liveTasks = await response.json();
+    currentTasks = await response.json();
     
-    localStorage.setItem(cacheKey, JSON.stringify(liveTasks));
-    renderTasks(liveTasks);
+    localStorage.setItem(cacheKey, JSON.stringify(currentTasks));
+    renderTasks();
 }
 
 // =========================================
-// STRICT DOM RENDERING (With Edit & Delete)
+// STRICT DOM RENDERING WITH TAB FILTERING & INLINE EDITING
 // =========================================
-function renderTasks(tasks) {
+function renderTasks() {
     taskListContainer.innerHTML = '';
 
-    if (tasks.length === 0) {
+    // Filter tasks based on selected tab filter
+    let filteredTasks = currentTasks;
+    if (currentFilter === 'active') {
+        filteredTasks = currentTasks.filter(t => t.status !== 'done');
+    } else if (currentFilter === 'completed') {
+        filteredTasks = currentTasks.filter(t => t.status === 'done');
+    }
+
+    if (filteredTasks.length === 0) {
         const emptyEl = document.createElement('p');
-        emptyEl.textContent = 'No tasks found for this project. Add one using the form!';
+        emptyEl.textContent = `No ${currentFilter} tasks found for this project.`;
         emptyEl.style.color = '#64748B';
         emptyEl.style.fontSize = '14px';
         taskListContainer.appendChild(emptyEl);
         return;
     }
 
-    tasks.forEach(task => {
+    filteredTasks.forEach(task => {
         const taskEl = document.createElement('div');
-        taskEl.className = `task-item priority-${task.priority}`;
+        const statusClass = task.status === 'done' ? 'status-done' : '';
+        taskEl.className = `task-item priority-${task.priority} ${statusClass}`;
 
         const contentDiv = document.createElement('div');
-        
+        contentDiv.style.flex = '1';
+
+        // Check if this specific task is currently in inline edit mode
+        if (task.isEditing) {
+            const editInput = document.createElement('input');
+            editInput.type = 'text';
+            editInput.className = 'task-edit-input';
+            editInput.value = task.title;
+            contentDiv.appendChild(editInput);
+
+            const editDateInput = document.createElement('input');
+            editDateInput.type = 'date';
+            editDateInput.className = 'task-edit-date';
+            editDateInput.value = task.due_date || '';
+            contentDiv.appendChild(editDateInput);
+
+            const metaEl = document.createElement('p');
+            const formattedStatus = task.status === 'in_progress' ? 'In Progress' : task.status.toUpperCase();
+            metaEl.textContent = `Status: ${formattedStatus}`;
+            contentDiv.appendChild(metaEl);
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'task-actions';
+
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'btn btn-primary';
+            saveBtn.textContent = 'Save';
+            saveBtn.addEventListener('click', () => saveTaskEdit(task.id, editInput.value, editDateInput.value));
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn btn-outline';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.addEventListener('click', () => {
+                task.isEditing = false;
+                renderTasks();
+            });
+
+            actionsDiv.appendChild(saveBtn);
+            actionsDiv.appendChild(cancelBtn);
+
+            taskEl.appendChild(contentDiv);
+            taskEl.appendChild(actionsDiv);
+            taskListContainer.appendChild(taskEl);
+            return; // Skip standard render for this item
+        }
+
+        // Standard Display Mode
         const titleEl = document.createElement('h4');
         titleEl.textContent = task.title;
 
         const metaEl = document.createElement('p');
-        metaEl.textContent = `Due: ${task.due_date || 'No date'} | Status: ${task.status}`;
+        const formattedStatus = task.status === 'in_progress' ? 'In Progress' : task.status.toUpperCase();
+        metaEl.textContent = `Due: ${task.due_date || 'No date'} | Status: ${formattedStatus}`;
 
         contentDiv.appendChild(titleEl);
         contentDiv.appendChild(metaEl);
@@ -238,19 +294,37 @@ function renderTasks(tasks) {
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'task-actions';
 
-        // Edit Button (Requirement 4)
-        const editBtn = document.createElement('button');
-        editBtn.className = 'btn btn-outline';
-        editBtn.textContent = 'Edit';
-        editBtn.addEventListener('click', () => editTask(task));
+        if (task.status !== 'done') {
+            const doneBtn = document.createElement('button');
+            doneBtn.className = 'btn btn-secondary';
+            doneBtn.textContent = '✓ Done';
+            doneBtn.addEventListener('click', () => markTaskDone(task));
+            actionsDiv.appendChild(doneBtn);
+        } else {
+            const reopenBtn = document.createElement('button');
+            reopenBtn.className = 'btn btn-outline';
+            reopenBtn.textContent = '↺ Reopen';
+            reopenBtn.addEventListener('click', () => markTaskReopened(task));
+            actionsDiv.appendChild(reopenBtn);
+        }
 
-        // Delete Button
+        // Only allow editing active tasks (completed tasks must be reopened first)
+        if (task.status !== 'done') {
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-outline';
+            editBtn.textContent = 'Edit';
+            editBtn.addEventListener('click', () => {
+                task.isEditing = true;
+                renderTasks();
+            });
+            actionsDiv.appendChild(editBtn);
+        }
+
         const delBtn = document.createElement('button');
         delBtn.className = 'btn btn-danger';
         delBtn.textContent = 'Delete';
         delBtn.addEventListener('click', () => deleteTask(task.id)); 
 
-        actionsDiv.appendChild(editBtn);
         actionsDiv.appendChild(delBtn);
 
         taskEl.appendChild(contentDiv);
@@ -261,14 +335,14 @@ function renderTasks(tasks) {
 }
 
 // =========================================
-// TASK CRUD & CALENDAR DATE PICKER
+// TASK CRUD & ACTIONS
 // =========================================
 addTaskForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const titleInput = document.getElementById('task-title');
     const priority = document.getElementById('task-priority').value;
-    const dueDate = document.getElementById('task-due-date').value; // HTML5 Date Picker
+    const dueDate = document.getElementById('task-due-date').value;
     
     const trimmedTitle = titleInput.value.trim();
 
@@ -301,26 +375,39 @@ addTaskForm.addEventListener('submit', async (e) => {
     loadProjectStats();
 });
 
-// Edit Task Handler
-async function editTask(task) {
-    const newTitle = prompt("Edit task title:", task.title);
-    if (newTitle === null) return; // Cancelled
-    
+async function markTaskDone(task) {
+    await fetch(`${API_BASE}/tasks/${task.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'done' })
+    });
+    loadTasks();
+    loadProjectStats();
+}
+
+async function markTaskReopened(task) {
+    await fetch(`${API_BASE}/tasks/${task.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'todo' })
+    });
+    loadTasks();
+    loadProjectStats();
+}
+
+async function saveTaskEdit(taskId, newTitle, newDueDate) {
     const trimmed = newTitle.trim();
     if (!trimmed) {
         alert("Task title cannot be empty.");
         return;
     }
 
-    const newStatus = prompt("Update status (todo, in_progress, done):", task.status);
-    if (newStatus === null) return;
-
-    await fetch(`${API_BASE}/tasks/${task.id}`, {
+    await fetch(`${API_BASE}/tasks/${taskId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.stringify({ 
             title: trimmed,
-            status: newStatus.trim()
+            due_date: newDueDate || null 
         })
     });
 
@@ -334,6 +421,18 @@ async function deleteTask(taskId) {
     loadTasks();
     loadProjectStats();
 }
+
+// =========================================
+// TAB FILTER LISTENERS
+// =========================================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentFilter = e.target.getAttribute('data-filter');
+        renderTasks();
+    });
+});
 
 // Start Application
 init();

@@ -46,17 +46,23 @@
         <!-- DASHBOARD VIEW -->
         <section id="dashboard-view" class="hidden">
             
-            <!-- Project Bar & Stats (Full Width Row) -->
+            <!-- Project Bar & Stats -->
             <div class="project-toolbar box-container">
                 <div class="project-selector-group">
-                    <select id="project-select">
-                        <option value="" disabled selected>Select a Project...</option>
-                    </select>
+                    <div class="input-group-vertical">
+                        <label for="project-select" class="field-label">Active Project</label>
+                        <select id="project-select">
+                            <option value="" disabled selected>Select a Project...</option>
+                        </select>
+                    </div>
                     
                     <!-- Inline Project Creation Box -->
                     <div class="inline-project-create">
-                        <input type="text" id="new-project-input" placeholder="New project name...">
-                        <button id="create-project-btn" class="btn btn-primary">+ Create & Open</button>
+                        <label class="field-label" style="visibility: hidden;">Action</label>
+                        <div class="create-input-row">
+                            <input type="text" id="new-project-input" placeholder="New project name...">
+                            <button id="create-project-btn" class="btn btn-primary">+ Create & Open</button>
+                        </div>
                     </div>
                 </div>
 
@@ -121,6 +127,13 @@
                         </div>
                     </div>
                     
+                    <!-- Tab Filters -->
+                    <div class="task-tabs">
+                        <button class="tab-btn active" data-filter="all">All Tasks</button>
+                        <button class="tab-btn" data-filter="active">Active</button>
+                        <button class="tab-btn" data-filter="completed">Completed</button>
+                    </div>
+
                     <div id="task-list-container" class="task-list">
                         <!-- Tasks rendered dynamically -->
                     </div>

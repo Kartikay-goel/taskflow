@@ -140,6 +140,31 @@ input:focus, select:focus {
     box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.05);
 }
 
+/* Field Labels */
+.field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.input-group-vertical {
+    flex: 1;
+    min-width: 220px;
+}
+
+.create-input-row {
+    display: flex;
+    gap: 8px;
+}
+
+.create-input-row input {
+    margin-bottom: 0;
+}
+
 /* Project Toolbar & Inline Creator */
 .project-toolbar {
     display: flex;
@@ -164,13 +189,9 @@ input:focus, select:focus {
 
 .inline-project-create {
     display: flex;
-    gap: 8px;
+    flex-direction: column;
     flex: 1;
     max-width: 400px;
-}
-
-.inline-project-create input {
-    margin-bottom: 0;
 }
 
 /* Enhanced Stats Cards */
@@ -237,9 +258,9 @@ input:focus, select:focus {
 }
 
 .quick-add-section {
-    margin-top: 24px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border-color);
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px dashed var(--border-color);
 }
 
 .quick-add-section h4 {
@@ -248,7 +269,43 @@ input:focus, select:focus {
     margin-bottom: 10px;
 }
 
-/* Task Cards */
+#quick-add-input {
+    margin-bottom: 14px;
+}
+
+/* Task Tabs Styling */
+.task-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+}
+
+.tab-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    background-color: #F1F5F9;
+    color: var(--text-main);
+}
+
+.tab-btn.active {
+    background-color: var(--secondary);
+    color: #FFFFFF;
+    border-color: var(--secondary);
+}
+
+/* Task Cards & Inline Editing */
 .list-header {
     display: flex;
     justify-content: space-between;
@@ -270,6 +327,7 @@ input:focus, select:focus {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 16px;
 }
 
 .task-item.priority-high { background: var(--p-high-bg); border-color: var(--p-high-border); }
@@ -281,6 +339,16 @@ input:focus, select:focus {
 .task-item.priority-low { background: var(--p-low-bg); border-color: var(--p-low-border); }
 .task-item.priority-low h4 { color: var(--p-low-text); }
 
+/* Status styling for completed items */
+.task-item.status-done {
+    background-color: #F0FDF4 !important;
+    border-color: #86EFAC !important;
+}
+.task-item.status-done h4 {
+    color: #166534 !important;
+    text-decoration: line-through;
+}
+
 .task-item h4 {
     font-size: 15px;
     font-weight: 600;
@@ -290,6 +358,36 @@ input:focus, select:focus {
 .task-item p {
     font-size: 12px;
     color: var(--text-muted);
+}
+
+.task-edit-input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    outline: none;
+    background: #FFF;
+    margin-bottom: 8px;
+}
+.task-edit-input:focus {
+    border-color: var(--secondary);
+    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.05);
+}
+
+.task-edit-date {
+    width: 200px;
+    padding: 6px 10px;
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    outline: none;
+    background: #FFF;
+    margin-bottom: 8px;
+}
+.task-edit-date:focus {
+    border-color: var(--secondary);
 }
 
 .task-actions {
@@ -339,7 +437,6 @@ input:focus, select:focus {
     margin-top: auto;
 }
 
-/* Responsive */
 @media (max-width: 900px) {
     .task-management-layout {
         flex-direction: column;
