@@ -97,7 +97,7 @@ signupForm.addEventListener('submit', async (e) => {
         loginUser(user.id, user.name);
     } catch (err) {
         authError.textContent = err.message;
-        authError.classList.remove('hidden');
+        authError.classList.add('hidden');
     }
 });
 
@@ -319,8 +319,12 @@ function renderTasks() {
         if (isDueSoon) {
             metaHtml += `<span class="due-tag urgent">⚠️ Due Soon!</span>`;
         }
-        const formattedStatus = task.status === 'in_progress' ? 'In Progress' : task.status.toUpperCase();
-        metaHtml += ` | Status: ${formattedStatus}`;
+        
+        let displayStatus = 'To Do';
+        if (task.status === 'in_progress') displayStatus = 'In Progress';
+        if (task.status === 'done') displayStatus = 'DONE';
+        
+        metaHtml += ` | Status: ${displayStatus}`;
         metaEl.innerHTML = metaHtml;
 
         contentDiv.appendChild(titleRow);
@@ -329,7 +333,13 @@ function renderTasks() {
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'task-actions';
 
-        if (task.status !== 'done') {
+        if (task.status === 'todo') {
+            const startBtn = document.createElement('button');
+            startBtn.className = 'btn btn-primary';
+            startBtn.textContent = 'Start';
+            startBtn.addEventListener('click', () => markTaskInProgress(task));
+            actionsDiv.appendChild(startBtn);
+        } else if (task.status === 'in_progress') {
             const doneBtn = document.createElement('button');
             doneBtn.className = 'btn btn-secondary';
             doneBtn.textContent = 'Mark as Done';
@@ -445,6 +455,16 @@ if (quickAddForm) {
             alert(err.message);
         }
     });
+}
+
+async function markTaskInProgress(task) {
+    await fetch(`${API_BASE}/tasks/${task.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'in_progress' })
+    });
+    loadTasks();
+    loadProjectStats();
 }
 
 async function markTaskDone(task) {
