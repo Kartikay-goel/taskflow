@@ -7,56 +7,83 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Persistent UI Element (position: sticky in CSS) -->
+    <!-- Persistent Header -->
     <header class="app-header">
-        <div class="logo">Task<span>Flow</span></div>
+        <div class="logo">Task<span>Flow</span> <small class="logo-sub">Blinkit Pods</small></div>
         <div id="user-profile" class="hidden">
             <span id="current-user-name"></span>
             <button id="logout-btn" class="btn btn-outline">Logout</button>
         </div>
     </header>
 
-    <main class="container">
+    <!-- Full Page Container -->
+    <main class="container-fluid">
         <!-- AUTHENTICATION VIEW -->
-        <section id="auth-view" class="box-container">
-            <div class="auth-forms">
-                <form id="login-form" class="auth-form">
-                    <h2>Pod Login</h2>
-                    <input type="email" id="login-email" placeholder="Email (e.g., kartikay@blinkit.com)" required>
-                    <input type="password" id="login-password" placeholder="Password" required>
-                    <button type="submit" class="btn btn-primary">Login</button>
-                </form>
+        <section id="auth-view" class="auth-wrapper">
+            <div class="box-container auth-box">
+                <div class="auth-forms">
+                    <form id="login-form" class="auth-form">
+                        <h2>Pod Login</h2>
+                        <input type="email" id="login-email" placeholder="Email (e.g., kartikay@blinkit.com)" required>
+                        <input type="password" id="login-password" placeholder="Password" required>
+                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                    </form>
 
-                <div class="divider"></div>
+                    <div class="divider"></div>
 
-                <form id="signup-form" class="auth-form">
-                    <h2>New Member Registration</h2>
-                    <input type="text" id="signup-name" placeholder="Full Name (e.g., Kartikay Goel)" required>
-                    <input type="email" id="signup-email" placeholder="Email" required>
-                    <input type="password" id="signup-password" placeholder="Password" required>
-                    <button type="submit" class="btn btn-secondary">Sign Up</button>
-                </form>
+                    <form id="signup-form" class="auth-form">
+                        <h2>New Member Registration</h2>
+                        <input type="text" id="signup-name" placeholder="Full Name" required>
+                        <input type="email" id="signup-email" placeholder="Email" required>
+                        <input type="password" id="signup-password" placeholder="Password" required>
+                        <button type="submit" class="btn btn-secondary w-100">Sign Up</button>
+                    </form>
+                </div>
+                <div id="auth-error" class="error-message hidden"></div>
             </div>
-            <div id="auth-error" class="error-message hidden"></div>
         </section>
 
-        <!-- DASHBOARD VIEW (Hidden until logged in) -->
+        <!-- DASHBOARD VIEW -->
         <section id="dashboard-view" class="hidden">
             
-            <!-- Project Selection & Stats -->
-            <div class="project-header box-container">
-                <div class="project-selector">
-                    <select id="project-select">
-                        <option value="" disabled selected>Select a Project...</option>
-                        <!-- Projects populated by JS -->
-                    </select>
-                    <button id="new-project-btn" class="btn btn-secondary">+ New Project</button>
+            <!-- Project Bar & Stats -->
+            <div class="project-toolbar box-container">
+                <div class="project-selector-group">
+                    <div class="input-group-vertical">
+                        <label for="project-select" class="field-label">Active Project</label>
+                        <select id="project-select">
+                            <option value="" disabled selected>Select a Project...</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Inline Project Creation Box -->
+                    <div class="inline-project-create">
+                        <label class="field-label" style="visibility: hidden;">Action</label>
+                        <div class="create-input-row">
+                            <input type="text" id="new-project-input" placeholder="New project name...">
+                            <button id="create-project-btn" class="btn btn-primary">+ Create & Open</button>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Modern Stats Badges -->
                 <div id="project-stats" class="stats-container">
-                    <span class="stat-badge">Total: <b id="stat-total">0</b></span>
-                    <span class="stat-badge stat-todo">To Do: <b id="stat-todo">0</b></span>
-                    <span class="stat-badge stat-progress">In Progress: <b id="stat-progress">0</b></span>
-                    <span class="stat-badge stat-done">Done: <b id="stat-done">0</b></span>
+                    <div class="stat-card stat-total">
+                        <span class="stat-label">Total</span>
+                        <span class="stat-value" id="stat-total">0</span>
+                    </div>
+                    <div class="stat-card stat-todo">
+                        <span class="stat-label">To Do</span>
+                        <span class="stat-value" id="stat-todo">0</span>
+                    </div>
+                    <div class="stat-card stat-progress">
+                        <span class="stat-label">In Progress</span>
+                        <span class="stat-value" id="stat-progress">0</span>
+                    </div>
+                    <div class="stat-card stat-done">
+                        <span class="stat-label">Done</span>
+                        <span class="stat-value" id="stat-done">0</span>
+                    </div>
                 </div>
             </div>
 
@@ -75,18 +102,17 @@
                                 <option value="medium" selected>Medium Priority</option>
                                 <option value="high">High Priority</option>
                             </select>
-                            <!-- Due date as text to satisfy rubric's "raw text" requirement -->
-                            <input type="text" id="task-due-date" placeholder="Due Date (e.g., next tuesday)">
+                            <!-- Calendar Date Picker -->
+                            <input type="date" id="task-due-date">
                         </div>
                         
                         <button type="submit" class="btn btn-primary w-100">Add Task</button>
                     </form>
 
-                    <!-- Section 3 Placeholder: AI Quick Add -->
                     <div class="quick-add-section">
                         <h4>⚡ AI Quick-Add</h4>
                         <form id="quick-add-form">
-                            <input type="text" id="quick-add-input" placeholder="Type naturally... (e.g., Restock shelves next friday it's urgent)">
+                            <input type="text" id="quick-add-input" placeholder="Type naturally... (e.g., Restock shelves next friday)">
                             <button type="submit" class="btn btn-dark w-100">Magic Add</button>
                         </form>
                     </div>
@@ -97,21 +123,28 @@
                     <div class="list-header">
                         <h3>Task Board</h3>
                         <div class="sort-controls">
-                            <button id="sort-priority-btn" class="btn btn-outline">Sort by Priority (Section 2)</button>
+                            <button id="sort-priority-btn" class="btn btn-outline">Sort by Priority</button>
                         </div>
                     </div>
                     
+                    <!-- Tab Filters -->
+                    <div class="task-tabs">
+                        <button class="tab-btn active" data-filter="all">All Tasks</button>
+                        <button class="tab-btn" data-filter="active">Active</button>
+                        <button class="tab-btn" data-filter="completed">Completed</button>
+                    </div>
+
                     <div id="task-list-container" class="task-list">
-                        <!-- Tasks will be rendered here by JS using document.createElement -->
+                        <!-- Tasks rendered dynamically -->
                     </div>
                 </div>
             </div>
         </section>
-
-        <footer class="app-footer box-container">
-            <p>TaskFlow &copy; 2026 - Blinkit Pod Operations Platform</p>
-        </footer>
     </main>
+
+    <footer class="app-footer">
+        <p>TaskFlow &copy; 2026 - Blinkit Pod Operations Platform</p>
+    </footer>
 
     <script src="app.js"></script>
 </body>

@@ -5,25 +5,26 @@ const API_BASE = 'http://127.0.0.1:8000';
 let activeUserId = localStorage.getItem('loggedInUserId');
 let activeUserName = localStorage.getItem('loggedInUserName');
 let activeProjectId = null;
+let currentTasks = [];
+let currentFilter = 'all'; // 'all', 'active', 'completed'
 
 // =========================================
 // DOM ELEMENTS
 // =========================================
-// Views
 const authView = document.getElementById('auth-view');
 const dashboardView = document.getElementById('dashboard-view');
 const userProfile = document.getElementById('user-profile');
 const currentUserNameEl = document.getElementById('current-user-name');
 const authError = document.getElementById('auth-error');
 
-// Forms
 const loginForm = document.getElementById('login-form');
 const signupForm = document.getElementById('signup-form');
 const addTaskForm = document.getElementById('add-task-form');
 
-// Project & Task UI
 const projectSelect = document.getElementById('project-select');
-const newProjectBtn = document.getElementById('new-project-btn');
+const newProjectInput = document.getElementById('new-project-input');
+const createProjectBtn = document.getElementById('create-project-btn');
+
 const taskListContainer = document.getElementById('task-list-container');
 const titleError = document.getElementById('title-error');
 
@@ -56,7 +57,7 @@ function showDashboard() {
 // AUTHENTICATION LOGIC
 // =========================================
 loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault(); // Rubric: Intercept submit event
+    e.preventDefault();
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
 
@@ -66,9 +67,7 @@ loginForm.addEventListener('submit', async (e) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
-
         if (!response.ok) throw new Error('Invalid credentials');
-        
         const user = await response.json();
         loginUser(user.id, user.name);
     } catch (err) {
@@ -89,9 +88,7 @@ signupForm.addEventListener('submit', async (e) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, email, password })
         });
-
         if (!response.ok) throw new Error('Email already registered');
-        
         const user = await response.json();
         loginUser(user.id, user.name);
     } catch (err) {
@@ -119,9 +116,9 @@ document.getElementById('logout-btn').addEventListener('click', () => {
 });
 
 // =========================================
-// PROJECT LOGIC
+// PROJECT LOGIC & AUTO-OPEN
 // =========================================
-async function loadProjects() {
+async function loadProjects(selectNewId = null) {
     const response = await fetch(`${API_BASE}/projects?owner_id=${activeUserId}`);
     const projects = await response.json();
     
@@ -130,21 +127,45 @@ async function loadProjects() {
     projects.forEach(proj => {
         const option = document.createElement('option');
         option.value = proj.id;
-        option.textContent = proj.name; // Safe rendering
+        option.textContent = proj.name;
         projectSelect.appendChild(option);
     });
+
+    if (selectNewId) {
+        projectSelect.value = selectNewId;
+        activeProjectId = selectNewId;
+        loadTasks();
+        loadProjectStats();
+    } else if (projects.length > 0 && !activeProjectId) {
+        projectSelect.value = projects[0].id;
+        activeProjectId = projects[0].id;
+        loadTasks();
+        loadProjectStats();
+    }
 }
 
-newProjectBtn.addEventListener('click', async () => {
-    const name = prompt('Enter new project name:');
-    if (!name) return;
+createProjectBtn.addEventListener('click', async () => {
+    const name = newProjectInput.value.trim();
+    if (!name) {
+        alert("Please enter a project name.");
+        return;
+    }
 
-    await fetch(`${API_BASE}/projects`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, owner_id: activeUserId })
-    });
-    loadProjects();
+    try {
+        const response = await fetch(`${API_BASE}/projects`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, owner_id: parseInt(activeUserId) })
+        });
+        
+        if (!response.ok) throw new Error("Failed to create project");
+        const newProject = await response.json();
+        
+        newProjectInput.value = '';
+        await loadProjects(newProject.id);
+    } catch (err) {
+        alert(err.message);
+    }
 });
 
 projectSelect.addEventListener('change', (e) => {
@@ -165,48 +186,107 @@ async function loadProjectStats() {
 }
 
 // =========================================
-// TASK LOGIC & LOCALSTORAGE CACHING
+// TASK LOGIC & CACHING
 // =========================================
 async function loadTasks() {
     if (!activeProjectId) return;
 
-    // Rubric: Cache the current task list in localStorage... render from cached copy first
     const cacheKey = `tasks_project_${activeProjectId}`;
     const cachedTasks = localStorage.getItem(cacheKey);
-    
     if (cachedTasks) {
-        renderTasks(JSON.parse(cachedTasks)); // Instant UI update from cache
+        currentTasks = JSON.parse(cachedTasks);
+        renderTasks();
     }
 
-    // Live backend request in flight
     const response = await fetch(`${API_BASE}/tasks?project_id=${activeProjectId}`);
-    const liveTasks = await response.json();
+    currentTasks = await response.json();
     
-    // Update cache and re-render with fresh data
-    localStorage.setItem(cacheKey, JSON.stringify(liveTasks));
-    renderTasks(liveTasks);
+    localStorage.setItem(cacheKey, JSON.stringify(currentTasks));
+    renderTasks();
 }
 
 // =========================================
-// STRICT DOM MANIPULATION (Requirement)
+// STRICT DOM RENDERING WITH TAB FILTERING & INLINE EDITING
 // =========================================
-function renderTasks(tasks) {
-    taskListContainer.innerHTML = ''; // Safe to clear container this way
+function renderTasks() {
+    taskListContainer.innerHTML = '';
 
-    tasks.forEach(task => {
-        // Rubric: Use document.createElement() and appendChild()
+    // Filter tasks based on selected tab filter
+    let filteredTasks = currentTasks;
+    if (currentFilter === 'active') {
+        filteredTasks = currentTasks.filter(t => t.status !== 'done');
+    } else if (currentFilter === 'completed') {
+        filteredTasks = currentTasks.filter(t => t.status === 'done');
+    }
+
+    if (filteredTasks.length === 0) {
+        const emptyEl = document.createElement('p');
+        emptyEl.textContent = `No ${currentFilter} tasks found for this project.`;
+        emptyEl.style.color = '#64748B';
+        emptyEl.style.fontSize = '14px';
+        taskListContainer.appendChild(emptyEl);
+        return;
+    }
+
+    filteredTasks.forEach(task => {
         const taskEl = document.createElement('div');
-        taskEl.className = `task-item priority-${task.priority}`;
+        const statusClass = task.status === 'done' ? 'status-done' : '';
+        taskEl.className = `task-item priority-${task.priority} ${statusClass}`;
 
         const contentDiv = document.createElement('div');
-        
+        contentDiv.style.flex = '1';
+
+        // Check if this specific task is currently in inline edit mode
+        if (task.isEditing) {
+            const editInput = document.createElement('input');
+            editInput.type = 'text';
+            editInput.className = 'task-edit-input';
+            editInput.value = task.title;
+            contentDiv.appendChild(editInput);
+
+            const editDateInput = document.createElement('input');
+            editDateInput.type = 'date';
+            editDateInput.className = 'task-edit-date';
+            editDateInput.value = task.due_date || '';
+            contentDiv.appendChild(editDateInput);
+
+            const metaEl = document.createElement('p');
+            const formattedStatus = task.status === 'in_progress' ? 'In Progress' : task.status.toUpperCase();
+            metaEl.textContent = `Status: ${formattedStatus}`;
+            contentDiv.appendChild(metaEl);
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'task-actions';
+
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'btn btn-primary';
+            saveBtn.textContent = 'Save';
+            saveBtn.addEventListener('click', () => saveTaskEdit(task.id, editInput.value, editDateInput.value));
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn btn-outline';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.addEventListener('click', () => {
+                task.isEditing = false;
+                renderTasks();
+            });
+
+            actionsDiv.appendChild(saveBtn);
+            actionsDiv.appendChild(cancelBtn);
+
+            taskEl.appendChild(contentDiv);
+            taskEl.appendChild(actionsDiv);
+            taskListContainer.appendChild(taskEl);
+            return; // Skip standard render for this item
+        }
+
+        // Standard Display Mode
         const titleEl = document.createElement('h4');
-        titleEl.textContent = task.title; // Rubric: Use textContent for user-provided text
+        titleEl.textContent = task.title;
 
         const metaEl = document.createElement('p');
-        metaEl.style.fontSize = '12px';
-        metaEl.style.color = '#666';
-        metaEl.textContent = `Due: ${task.due_date || 'No date'} | Status: ${task.status}`;
+        const formattedStatus = task.status === 'in_progress' ? 'In Progress' : task.status.toUpperCase();
+        metaEl.textContent = `Due: ${task.due_date || 'No date'} | Status: ${formattedStatus}`;
 
         contentDiv.appendChild(titleEl);
         contentDiv.appendChild(metaEl);
@@ -214,11 +294,35 @@ function renderTasks(tasks) {
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'task-actions';
 
-        // Delete Button
+        if (task.status !== 'done') {
+            const doneBtn = document.createElement('button');
+            doneBtn.className = 'btn btn-secondary';
+            doneBtn.textContent = '✓ Done';
+            doneBtn.addEventListener('click', () => markTaskDone(task));
+            actionsDiv.appendChild(doneBtn);
+        } else {
+            const reopenBtn = document.createElement('button');
+            reopenBtn.className = 'btn btn-outline';
+            reopenBtn.textContent = '↺ Reopen';
+            reopenBtn.addEventListener('click', () => markTaskReopened(task));
+            actionsDiv.appendChild(reopenBtn);
+        }
+
+        // Only allow editing active tasks (completed tasks must be reopened first)
+        if (task.status !== 'done') {
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-outline';
+            editBtn.textContent = 'Edit';
+            editBtn.addEventListener('click', () => {
+                task.isEditing = true;
+                renderTasks();
+            });
+            actionsDiv.appendChild(editBtn);
+        }
+
         const delBtn = document.createElement('button');
-        delBtn.className = 'btn btn-outline';
+        delBtn.className = 'btn btn-danger';
         delBtn.textContent = 'Delete';
-        // Rubric: use addEventListener for interactive controls
         delBtn.addEventListener('click', () => deleteTask(task.id)); 
 
         actionsDiv.appendChild(delBtn);
@@ -231,7 +335,7 @@ function renderTasks(tasks) {
 }
 
 // =========================================
-// TASK CRUD & VALIDATION
+// TASK CRUD & ACTIONS
 // =========================================
 addTaskForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -242,7 +346,6 @@ addTaskForm.addEventListener('submit', async (e) => {
     
     const trimmedTitle = titleInput.value.trim();
 
-    // Rubric: Client-side validation for empty title
     if (!trimmedTitle) {
         titleError.classList.remove('hidden');
         return;
@@ -261,6 +364,7 @@ addTaskForm.addEventListener('submit', async (e) => {
             title: trimmedTitle,
             priority: priority,
             due_date: dueDate || null,
+            status: "todo",
             project_id: parseInt(activeProjectId)
         })
     });
@@ -271,11 +375,64 @@ addTaskForm.addEventListener('submit', async (e) => {
     loadProjectStats();
 });
 
+async function markTaskDone(task) {
+    await fetch(`${API_BASE}/tasks/${task.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'done' })
+    });
+    loadTasks();
+    loadProjectStats();
+}
+
+async function markTaskReopened(task) {
+    await fetch(`${API_BASE}/tasks/${task.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'todo' })
+    });
+    loadTasks();
+    loadProjectStats();
+}
+
+async function saveTaskEdit(taskId, newTitle, newDueDate) {
+    const trimmed = newTitle.trim();
+    if (!trimmed) {
+        alert("Task title cannot be empty.");
+        return;
+    }
+
+    await fetch(`${API_BASE}/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            title: trimmed,
+            due_date: newDueDate || null 
+        })
+    });
+
+    loadTasks();
+    loadProjectStats();
+}
+
 async function deleteTask(taskId) {
+    if (!confirm("Are you sure you want to delete this task?")) return;
     await fetch(`${API_BASE}/tasks/${taskId}`, { method: 'DELETE' });
     loadTasks();
     loadProjectStats();
 }
+
+// =========================================
+// TAB FILTER LISTENERS
+// =========================================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentFilter = e.target.getAttribute('data-filter');
+        renderTasks();
+    });
+});
 
 // Start Application
 init();
