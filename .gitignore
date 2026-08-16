@@ -1,0 +1,10 @@
+# Python cache and binaries
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local database and environment
+taskflow.db
+venv/
+.env
