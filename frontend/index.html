@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Persistent Header -->
     <header class="app-header">
         <div class="logo">Task<span>Flow</span> <small class="logo-sub">Blinkit Pods</small></div>
         <div id="user-profile" class="hidden" style="display: flex; gap: 12px; align-items: center;">
@@ -16,47 +15,66 @@
         </div>
     </header>
 
-    <!-- Full Page Container -->
     <main class="container-fluid">
         <!-- AUTHENTICATION VIEW -->
         <section id="auth-view" class="auth-wrapper">
-            <div class="box-container auth-box">
-                <div class="auth-forms">
-                    <form id="login-form" class="auth-form">
-                        <h2>Pod Login</h2>
-                        <input type="email" id="login-email" placeholder="Email Address" required>
-                        <input type="password" id="login-password" placeholder="Password" required>
-                        <button type="submit" class="btn btn-primary w-100">Login</button>
-                    </form>
+            <!-- Login Box -->
+            <div id="login-container" class="auth-box">
+                <h2>Pod Login</h2>
+                <p class="subtitle">Access your Blinkit Pod workspace</p>
+                <form id="login-form">
+                    <div class="input-group">
+                        <label class="field-label">Email Address</label>
+                        <input type="email" id="login-email" placeholder="name@blinkit.com">
+                    </div>
+                    <div class="input-group">
+                        <label class="field-label">Password</label>
+                        <input type="password" id="login-password" placeholder="••••••••">
+                    </div>
+                    <div id="login-error" class="error-message hidden"></div>
+                    <button type="submit" class="btn btn-primary w-100" style="margin-top: 16px;">Login</button>
+                </form>
+                <p class="auth-switch-text">Don't have an account? <a href="javascript:void(0)" onclick="toggleAuth('signup')" class="auth-link">Register here</a></p>
+            </div>
 
-                    <div class="divider"></div>
-
-                    <form id="signup-form" class="auth-form">
-                        <h2>New Member Registration</h2>
-                        <input type="text" id="signup-name" placeholder="Full Name" required>
-                        <input type="email" id="signup-email" placeholder="Email" required>
-                        <input type="password" id="signup-password" placeholder="Password" required>
-                        <button type="submit" class="btn btn-secondary w-100">Sign Up</button>
-                    </form>
-                </div>
-                <div id="auth-error" class="error-message hidden"></div>
+            <!-- Signup Box -->
+            <div id="signup-container" class="auth-box hidden">
+                <h2>New Member Registration</h2>
+                <p class="subtitle">Join your pod operations team</p>
+                <form id="signup-form">
+                    <div class="input-group">
+                        <label class="field-label">Full Name</label>
+                        <input type="text" id="signup-name" placeholder="Kartikay Goel">
+                    </div>
+                    <div class="input-group">
+                        <label class="field-label">Email Address</label>
+                        <input type="email" id="signup-email" placeholder="name@blinkit.com">
+                    </div>
+                    <div class="input-group">
+                        <label class="field-label">Password</label>
+                        <input type="password" id="signup-password" placeholder="••••••••">
+                    </div>
+                    <div id="signup-error" class="error-message hidden"></div>
+                    <button type="submit" class="btn btn-primary w-100" style="margin-top: 16px;">Create Account</button>
+                </form>
+                <p class="auth-switch-text">Already have an account? <a href="javascript:void(0)" onclick="toggleAuth('login')" class="auth-link">Login here</a></p>
             </div>
         </section>
 
         <!-- DASHBOARD VIEW -->
         <section id="dashboard-view" class="hidden">
-            
-            <!-- Project Bar & Stats -->
             <div class="project-toolbar box-container">
                 <div class="project-selector-group">
                     <div class="input-group-vertical">
                         <label for="project-select" class="field-label">Active Project</label>
-                        <select id="project-select">
-                            <option value="" disabled selected>Select a Project...</option>
-                        </select>
+                        <div style="display: flex; gap: 8px;">
+                            <select id="project-select" style="flex: 1; margin-bottom: 0;">
+                                <option value="" disabled selected>Select a Project...</option>
+                            </select>
+                            <button id="delete-project-btn" class="btn btn-danger" title="Delete Active Project">Delete Project</button>
+                        </div>
                     </div>
                     
-                    <!-- Inline Project Creation Box -->
                     <div class="inline-project-create">
                         <label class="field-label">New Project</label>
                         <div class="create-input-row">
@@ -66,7 +84,6 @@
                     </div>
                 </div>
 
-                <!-- Modern Stats Badges -->
                 <div id="project-stats" class="stats-container">
                     <div class="stat-card">
                         <span class="stat-label">Total</span>
@@ -87,26 +104,22 @@
                 </div>
             </div>
 
-            <!-- Task Management Area -->
             <div class="task-management-layout">
-                <!-- Add Task Form -->
                 <div class="add-task-section box-container">
                     <h3>Add New Task</h3>
                     <form id="add-task-form" class="task-form">
                         <input type="text" id="task-title" placeholder="Task Title (e.g., Restock Amul Milk)">
-                        <div id="title-error" class="error-message hidden">Title cannot be empty!</div>
-                        
                         <div class="form-row">
                             <select id="task-priority">
+                                <option value="" disabled selected>Select Priority</option>
                                 <option value="low">Low Priority</option>
-                                <option value="medium" selected>Medium Priority</option>
+                                <option value="medium">Medium Priority</option>
                                 <option value="high">High Priority</option>
                             </select>
-                            <!-- Calendar Date Picker -->
                             <input type="date" id="task-due-date">
                         </div>
-                        
-                        <button type="submit" class="btn btn-primary w-100">Add Task</button>
+                        <div id="task-form-error" class="error-message hidden"></div>
+                        <button type="submit" class="btn btn-primary w-100" style="margin-top: 12px;">Add Task</button>
                     </form>
 
                     <div class="quick-add-section">
@@ -118,14 +131,11 @@
                     </div>
                 </div>
 
-                <!-- Task List Container -->
                 <div class="task-list-section box-container">
                     <div class="list-header">
                         <h3>Task Board</h3>
                         <div class="search-sort-group" style="display: flex; gap: 10px; align-items: center;">
                             <input type="text" id="task-search-input" placeholder="Search tasks..." style="padding: 8px 12px; font-size: 13px; max-width: 185px; margin-bottom: 0;">
-                            
-                            <!-- Sorting Dropdown Menu -->
                             <select id="sort-select" style="padding: 8px 12px; font-size: 13px; max-width: 175px; margin-bottom: 0;">
                                 <option value="">Sort: Default</option>
                                 <option value="priority">Priority (High-Low)</option>
@@ -134,7 +144,6 @@
                         </div>
                     </div>
                     
-                    <!-- Tab Filters -->
                     <div class="task-tabs">
                         <button class="tab-btn active" data-filter="all">All Tasks</button>
                         <button class="tab-btn" data-filter="active">Active</button>
@@ -143,6 +152,13 @@
 
                     <div id="task-list-container" class="task-list">
                         <!-- Tasks rendered dynamically -->
+                    </div>
+
+                    <!-- Pagination Controls -->
+                    <div id="pagination-controls" class="pagination-controls hidden" style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                        <button id="prev-page-btn" class="btn btn-outline" style="padding: 6px 14px;">&larr; Previous</button>
+                        <span id="page-info" style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Page 1 of 1</span>
+                        <button id="next-page-btn" class="btn btn-outline" style="padding: 6px 14px;">Next &rarr;</button>
                     </div>
                 </div>
             </div>
