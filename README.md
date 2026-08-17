@@ -7,8 +7,8 @@ TaskFlow is a high-performance, full-stack task management platform engineered f
 ## ✨ Features
 * **Authentication:** Secure user registration and login system with strict validation.
 * **Workspace Isolation:** Project-based grouping ensures pod tasks remain organized and distinct.
-* **Real-Time Task Board:** Instantly filter tasks by keyword, priority, or completion status.
-* **AI Quick-Add:** Natural language processing to instantly parse task priority and due dates (e.g., "Restock shelves high priority tomorrow").
+* **Real-Time Task Board:** Instantly filter tasks by keyword, priority, completion status, or due date.
+* **AI Quick-Add:** Natural language processing to instantly parse task priority and calculate exact due dates (e.g., "Restock shelves high priority tomorrow").
 * **Smart Urgency Tagging:** Automatically highlights tasks due within the next 48 hours to prevent operational bottlenecks.
 * **Dynamic Pagination:** Clean UI management capping views at 8 tasks per page.
 * **Integrated Algorithms:** Hand-rolled sorting and search engine executing highly optimized queries.
@@ -107,6 +107,9 @@ Visit `http://localhost:5500` in your browser.
 * **Request:**
   ```json
   {
+    "title": "Restock Amul Milk (Updated)",
+    "priority": "medium",
+    "due_date": "2026-08-22",
     "status": "in_progress"
   }
   ```
@@ -114,9 +117,9 @@ Visit `http://localhost:5500` in your browser.
   ```json
   {
     "id": 1,
-    "title": "Restock Amul Milk",
-    "priority": "high",
-    "due_date": "2026-08-20",
+    "title": "Restock Amul Milk (Updated)",
+    "priority": "medium",
+    "due_date": "2026-08-22",
     "status": "in_progress",
     "project_id": 1
   }
@@ -146,7 +149,7 @@ Visit `http://localhost:5500` in your browser.
   ```
 
 ### 7. Sorted Task List
-* **Method & Path:** `GET /tasks?sort=priority`
+* **Method & Path:** `GET /tasks?sort=priority` *(or sort=due_date)*
 * **Response:** (200 OK)
   ```json
   [
@@ -184,7 +187,7 @@ Visit `http://localhost:5500` in your browser.
     "id": 3,
     "title": "Fix the freezer by",
     "priority": "high",
-    "due_date": "tomorrow",
+    "due_date": "tomorrow (2026-08-18)",
     "status": "todo",
     "project_id": 1
   }
@@ -220,17 +223,17 @@ Paying the upfront O(N^2) cost to sort the task list via `insertion_sort` is hig
 
 ## 🧠 AI Quick-Add Prompting Rationale
 
-The AI prompt architecture relies strictly on a **Zero-Shot** parsing technique mapped to deterministic rules. By giving the parser explicit keyword extraction targets without providing lengthy conversational history or multi-step reasoning prompts (like Chain-of-Thought), we achieve two things: minimal token usage and near-instantaneous response times. In a fast-paced dark store environment, users need the task generated immediately; Zero-Shot provides exactly enough context to reliably extract priority and due dates without over-complicating the context window or risking hallucinations.
+The AI prompt architecture relies strictly on a **Zero-Shot** parsing technique mapped to deterministic rules. By giving the parser explicit keyword extraction targets without providing lengthy conversational history or multi-step reasoning prompts (like Chain-of-Thought), we achieve two things: minimal token usage and near-instantaneous response times. In a fast-paced dark store environment, users need the task generated immediately; Zero-Shot provides exactly enough context to reliably extract priority and dynamically calculate future dates without over-complicating the context window or risking hallucinations.
 
 ### 5 Worked Examples (Mock Parser)
 
 | Input Description | Exact Parsed JSON Output |
 | :--- | :--- |
 | "Check inventory whenever you can" | `{"title": "Check inventory you can", "priority": "low", "due_date": null}` |
-| "Urgent server reboot today" | `{"title": "server reboot", "priority": "high", "due_date": "today"}` |
-| "Update metrics next wednesday" | `{"title": "Update metrics", "priority": "medium", "due_date": "next wednesday"}` |
+| "Urgent server reboot today" | `{"title": "server reboot", "priority": "high", "due_date": "today (2026-08-17)"}` |
+| "Update metrics next wednesday" | `{"title": "Update metrics", "priority": "medium", "due_date": "next wednesday (2026-08-26)"}` |
 | "   " | `{"title": "Untitled task", "priority": "medium", "due_date": null}` |
-| "low priority stock audit next friday asap" | `{"title": "stock audit", "priority": "high", "due_date": "next friday"}` |
+| "low priority stock audit next friday asap" | `{"title": "stock audit", "priority": "high", "due_date": "next friday (2026-08-28)"}` |
 
 ---
 **Author:** Kartikay Goel
