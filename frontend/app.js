@@ -153,14 +153,16 @@ function updateDeleteButtonLabel() {
     const deleteBtn = document.getElementById('delete-project-btn');
     if (!projectSelect || !deleteBtn) return;
 
-    if (projectSelect.selectedIndex >= 0) {
+    if (projectSelect.selectedIndex >= 0 && activeProjectId) {
         const selectedOption = projectSelect.options[projectSelect.selectedIndex];
-        if (activeProjectId && selectedOption && selectedOption.value !== "") {
+        if (selectedOption && selectedOption.value !== "") {
             deleteBtn.textContent = `Delete "${selectedOption.text}"`;
+            deleteBtn.style.display = 'inline-block'; // Show if project exists
             return;
         }
     }
-    deleteBtn.textContent = 'Delete Project';
+    // Hide entirely if no valid project is selected or list is empty
+    deleteBtn.style.display = 'none'; 
 }
 
 async function loadProjects(selectNewId = null) {
@@ -296,8 +298,18 @@ async function loadTasks() {
 
 function checkDueSoon(dueDateStr) {
     if (!dueDateStr) return false;
-    const today = new Date('2026-08-15');
-    const due = new Date(dueDateStr);
+    
+    // Extract real date if the AI appended brackets: "next friday (2026-08-21)"
+    let dateToParse = dueDateStr;
+    const match = dueDateStr.match(/\((\d{4}-\d{2}-\d{2})\)/);
+    if (match) dateToParse = match[1];
+    
+    const today = new Date();
+    const due = new Date(dateToParse);
+    
+    // Fallback if raw text isn't a parsable date format
+    if (isNaN(due)) return false; 
+    
     const diffTime = due - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays >= 0 && diffDays <= 2;
@@ -343,27 +355,71 @@ function renderTasks() {
         const contentDiv = document.createElement('div');
         contentDiv.style.flex = '1';
 
+        // =========================================
         // INLINE EDITING MODE
+        // =========================================
         if (task.isEditing) {
+            const editContainer = document.createElement('div');
+            editContainer.className = 'edit-form-container';
+
+            // 1. Title Input Group
+            const titleGroup = document.createElement('div');
+            titleGroup.className = 'edit-group';
+            titleGroup.innerHTML = '<label class="field-label">Task Title</label>';
             const editInput = document.createElement('input');
             editInput.type = 'text';
-            editInput.className = 'task-edit-input';
             editInput.value = task.title;
-            contentDiv.appendChild(editInput);
+            titleGroup.appendChild(editInput);
 
+            // Row for Priority and Date
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'edit-row';
+
+            // 2. Priority Dropdown Group
+            const priorityGroup = document.createElement('div');
+            priorityGroup.className = 'edit-group';
+            priorityGroup.innerHTML = '<label class="field-label">Priority</label>';
+            const prioritySelect = document.createElement('select');
+            prioritySelect.innerHTML = `
+                <option value="low" ${task.priority === 'low' ? 'selected' : ''}>Low Priority</option>
+                <option value="medium" ${task.priority === 'medium' ? 'selected' : ''}>Medium Priority</option>
+                <option value="high" ${task.priority === 'high' ? 'selected' : ''}>High Priority</option>
+            `;
+            priorityGroup.appendChild(prioritySelect);
+
+            // 3. Due Date Input Group
+            const dateGroup = document.createElement('div');
+            dateGroup.className = 'edit-group';
+            dateGroup.innerHTML = '<label class="field-label">Due Date</label>';
             const editDateInput = document.createElement('input');
             editDateInput.type = 'date';
-            editDateInput.className = 'task-edit-date';
-            editDateInput.value = task.due_date || '';
-            contentDiv.appendChild(editDateInput);
+            
+            // Extract pure YYYY-MM-DD if AI added bracket formatting
+            let rawDate = task.due_date || '';
+            const match = rawDate.match(/\((\d{4}-\d{2}-\d{2})\)/);
+            if (match) rawDate = match[1];
+            editDateInput.value = rawDate;
+            
+            dateGroup.appendChild(editDateInput);
+
+            // Assemble layout
+            rowDiv.appendChild(priorityGroup);
+            rowDiv.appendChild(dateGroup);
+            editContainer.appendChild(titleGroup);
+            editContainer.appendChild(rowDiv);
+            
+            contentDiv.appendChild(editContainer);
 
             const actionsDiv = document.createElement('div');
             actionsDiv.className = 'task-actions';
+            actionsDiv.style.alignItems = 'flex-end'; // Align buttons with the bottom inputs
+            actionsDiv.style.paddingBottom = '4px';
 
             const saveBtn = document.createElement('button');
             saveBtn.className = 'btn btn-primary';
             saveBtn.textContent = 'Save';
-            saveBtn.addEventListener('click', () => saveTaskEdit(task.id, editInput.value, editDateInput.value));
+            // Pass the new priority parameter to the save function
+            saveBtn.addEventListener('click', () => saveTaskEdit(task.id, editInput.value, editDateInput.value, prioritySelect.value));
 
             const cancelBtn = document.createElement('button');
             cancelBtn.className = 'btn btn-outline';
@@ -382,7 +438,9 @@ function renderTasks() {
             return;
         }
 
+        // =========================================
         // STANDARD DISPLAY MODE
+        // =========================================
         const titleRow = document.createElement('div');
         titleRow.style.display = 'flex';
         titleRow.style.alignItems = 'center';
@@ -403,8 +461,9 @@ function renderTasks() {
         const metaEl = document.createElement('p');
         const isDueSoon = task.status !== 'done' && checkDueSoon(task.due_date);
         
-        let metaHtml = `<span class="due-tag">Due: ${task.due_date || 'No date'}</span>`;
-        if (isDueSoon) metaHtml += `<span class="due-tag urgent">⚠️ Due Soon!</span>`;
+        // Removed hardcoded emoji so it doesn't double up with CSS
+        let metaHtml = `<span class="due-tag">${task.due_date || 'No date'}</span>`;
+        if (isDueSoon) metaHtml += `<span class="due-tag urgent">Due Soon!</span>`;
         
         let displayStatus = 'To Do';
         if (task.status === 'in_progress') displayStatus = 'In Progress';
@@ -439,7 +498,6 @@ function renderTasks() {
             actionsDiv.appendChild(reopenBtn);
         }
 
-        // --- THE RESTORED EDIT BUTTON ---
         if (task.status !== 'done') {
             const editBtn = document.createElement('button');
             editBtn.className = 'btn btn-outline';
@@ -462,7 +520,6 @@ function renderTasks() {
         taskListContainer.appendChild(taskEl);
     });
 
-    // Handle Pagination Display Safety (Remove hidden class to display block/flex)
     if (filteredTasks.length > pageSize) {
         if (paginationControls) {
             paginationControls.classList.remove('hidden');
@@ -571,7 +628,7 @@ async function markTaskInProgress(task) { await fetch(`${API_BASE}/tasks/${task.
 async function markTaskDone(task) { await fetch(`${API_BASE}/tasks/${task.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'done' })}); loadTasks(); loadProjectStats(); }
 async function markTaskReopened(task) { await fetch(`${API_BASE}/tasks/${task.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'todo' })}); loadTasks(); loadProjectStats(); }
 
-async function saveTaskEdit(taskId, newTitle, newDueDate) {
+async function saveTaskEdit(taskId, newTitle, newDueDate, newPriority) {
     const trimmed = newTitle.trim();
     if (!trimmed) {
         alert("Task title cannot be empty.");
@@ -583,7 +640,8 @@ async function saveTaskEdit(taskId, newTitle, newDueDate) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
             title: trimmed,
-            due_date: newDueDate || null 
+            due_date: newDueDate || null,
+            priority: newPriority // Newly added field sent to the backend
         })
     });
     loadTasks();
