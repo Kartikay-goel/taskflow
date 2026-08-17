@@ -119,8 +119,32 @@ input:focus, select:focus { border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59
 .badge-medium { background-color: var(--p-med-bg); color: var(--p-med-text); border: 1px solid var(--p-med-border); }
 .badge-low { background-color: var(--p-low-bg); color: var(--p-low-text); border: 1px solid var(--p-low-border); }
 
-.due-tag { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #F1F5F9; color: var(--text-muted); border: 1px solid var(--border-color); margin-right: 6px; }
-.due-tag.urgent { background-color: var(--p-high-bg); color: var(--p-high-text); border-color: var(--p-high-border); font-weight: 700; }
+/* Modern Pill-Style Due Date Tags */
+.due-tag { 
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px; 
+    border-radius: 12px; 
+    font-size: 11px; 
+    font-weight: 600; 
+    background: var(--bg-color); 
+    color: var(--text-muted); 
+    border: 1px solid var(--border-color);
+    margin-right: 6px; 
+}
+.due-tag::before { 
+    content: '🗓️ '; 
+    margin-right: 4px;
+    font-size: 12px;
+}
+.due-tag.urgent { 
+    background-color: var(--p-high-bg); 
+    color: var(--danger); 
+    border-color: var(--p-high-border);
+}
+.due-tag.urgent::before { 
+    content: '⚠️ '; 
+}
 .task-actions { display: flex; gap: 8px; }
 
 
@@ -203,4 +227,38 @@ input:focus, select:focus { border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59
     .project-toolbar { flex-direction: column; align-items: stretch; }
     .project-selector-group { flex-direction: column; align-items: stretch; }
     .project-selector-group select, .inline-project-create { max-width: 100%; }
+}
+
+
+/* =========================================================
+   INLINE EDIT FORM STYLES
+   ========================================================= */
+.edit-form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    padding-right: 16px;
+}
+
+.edit-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.edit-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.edit-group label {
+    margin-bottom: 4px;
+    text-align: left; /* Ensures labels align properly */
+}
+
+.edit-group input, .edit-group select {
+    padding: 8px 12px;
+    margin-bottom: 0;
 }

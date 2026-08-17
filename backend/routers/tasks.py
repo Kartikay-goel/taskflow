@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List
@@ -30,25 +31,35 @@ def list_tasks(project_id: int = None, sort_by: str = None, db: Session = Depend
         query = query.filter(models.Task.project_id == project_id)
     tasks = query.all()
     
-    # Hand-rolled Custom Sort Engine implementation
+    # 1. Sort by Priority (High -> Medium -> Low)
     if sort_by == "priority":
         task_dicts = []
         for t in tasks:
             d = {c.name: getattr(t, c.name) for c in t.__table__.columns}
-            # Map to comparable rank as required
-            d["priority_rank"] = {"low": 1, "medium": 2, "high": 3}.get(d["priority"], 2)
+            # Rank 1 is High, 2 is Medium, 3 is Low
+            d["priority_rank"] = {"high": 1, "medium": 2, "low": 3}.get(d["priority"], 2)
             task_dicts.append(d)
-        
         insertion_sort(task_dicts, "priority_rank")
+        return task_dicts
+        
+    # 2. Sort by Due Date (Earliest -> Latest)
+    elif sort_by == "due_date":
+        task_dicts = []
+        for t in tasks:
+            d = {c.name: getattr(t, c.name) for c in t.__table__.columns}
+            raw_date = d.get("due_date") or "9999-12-31" # Push null dates to the bottom
+            # Extract YYYY-MM-DD if bracket format is used, else sort by raw string
+            match = re.search(r'\d{4}-\d{2}-\d{2}', raw_date)
+            d["date_rank"] = match.group(0) if match else raw_date
+            task_dicts.append(d)
+        insertion_sort(task_dicts, "date_rank")
         return task_dicts
         
     return tasks
 
-# SEARCH ENDPOINT (Must be before /{task_id})
 @router.get("/search", response_model=schemas.TaskResponse, status_code=status.HTTP_200_OK)
 def search_tasks(title: str = Query(...), algo: str = Query("binary"), db: Session = Depends(get_db)):
     tasks = db.query(models.Task).all()
-    # Build in-memory index
     index = [{"id": t.id, "title": t.title} for t in tasks]
     
     if algo == "binary":
@@ -89,7 +100,6 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Task deleted successfully"}
 
-# QUICK ADD ENDPOINT (Using Strict Mock Parser)
 @router.post("/quick-add", response_model=schemas.TaskResponse, status_code=status.HTTP_201_CREATED)
 def quick_add_task(data: dict, db: Session = Depends(get_db)):
     raw_text = data.get("text", "")
@@ -98,7 +108,6 @@ def quick_add_task(data: dict, db: Session = Depends(get_db)):
     if not raw_text or not project_id:
         raise HTTPException(status_code=422, detail="Text and project_id are required")
         
-    # Validate project exists
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
     if not project:
         raise HTTPException(status_code=422, detail="Invalid project_id")
