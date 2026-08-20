@@ -131,7 +131,7 @@ input:focus, select:focus { border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59
     position: sticky; 
     top: 90px; 
 }
-.task-list-section { flex: 1; min-width: 0; }
+.task-list-section { flex: 1; min-width: 0;  width: 100%; min-height: 350px;}
 .form-row { display: flex; gap: 12px; margin-bottom: 16px; }
 .form-row input, .form-row select { margin-bottom: 0; }
 .task-form input, .task-form select { margin-bottom: 16px; }
