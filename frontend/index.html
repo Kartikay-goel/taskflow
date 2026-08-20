@@ -9,9 +9,9 @@
 <body>
     <header class="app-header">
         <div class="logo">Task<span>Flow</span> <small class="logo-sub">Blinkit Pods</small></div>
-        <div id="user-profile" class="hidden" style="display: flex; gap: 12px; align-items: center;">
-            <span id="current-user-name" style="font-weight: 600; font-size: 14px;"></span>
-            <button id="logout-btn" class="btn btn-outline" style="padding: 6px 12px;">Logout</button>
+        <div id="user-profile" class="hidden user-profile-group">
+            <span id="current-user-name" class="user-name-text"></span>
+            <button id="logout-btn" class="btn btn-outline btn-sm">Logout</button>
         </div>
     </header>
 
@@ -32,7 +32,7 @@
                         <input type="password" id="login-password" placeholder="••••••••">
                     </div>
                     <div id="login-error" class="error-message hidden"></div>
-                    <button type="submit" class="btn btn-primary w-100" style="margin-top: 16px;">Login</button>
+                    <button type="submit" class="btn btn-primary w-100 btn-margin-top">Login</button>
                 </form>
                 <p class="auth-switch-text">Don't have an account? <a href="javascript:void(0)" onclick="toggleAuth('signup')" class="auth-link">Register here</a></p>
             </div>
@@ -55,7 +55,7 @@
                         <input type="password" id="signup-password" placeholder="••••••••">
                     </div>
                     <div id="signup-error" class="error-message hidden"></div>
-                    <button type="submit" class="btn btn-primary w-100" style="margin-top: 16px;">Create Account</button>
+                    <button type="submit" class="btn btn-primary w-100 btn-margin-top">Create Account</button>
                 </form>
                 <p class="auth-switch-text">Already have an account? <a href="javascript:void(0)" onclick="toggleAuth('login')" class="auth-link">Login here</a></p>
             </div>
@@ -67,8 +67,8 @@
                 <div class="project-selector-group">
                     <div class="input-group-vertical">
                         <label for="project-select" class="field-label">Active Project</label>
-                        <div style="display: flex; gap: 8px;">
-                            <select id="project-select" style="flex: 1; margin-bottom: 0;">
+                        <div class="project-action-row">
+                            <select id="project-select" class="no-margin-bottom">
                                 <option value="" disabled selected>Select a Project...</option>
                             </select>
                             <button id="delete-project-btn" class="btn btn-danger" title="Delete Active Project">Delete Project</button>
@@ -78,7 +78,7 @@
                     <div class="inline-project-create">
                         <label class="field-label">New Project</label>
                         <div class="create-input-row">
-                            <input type="text" id="new-project-input" placeholder="New project name...">
+                            <input type="text" id="new-project-input" class="no-margin-bottom" placeholder="New project name...">
                             <button id="create-project-btn" class="btn btn-primary">+ Create & Open</button>
                         </div>
                     </div>
@@ -119,13 +119,13 @@
                             <input type="date" id="task-due-date">
                         </div>
                         <div id="task-form-error" class="error-message hidden"></div>
-                        <button type="submit" class="btn btn-primary w-100" style="margin-top: 12px;">Add Task</button>
+                        <button type="submit" class="btn btn-primary w-100 btn-margin-top">Add Task</button>
                     </form>
 
                     <div class="quick-add-section">
                         <h4>⚡ AI Quick-Add</h4>
                         <form id="quick-add-form">
-                            <input type="text" id="quick-add-input" placeholder="Type naturally... (e.g., Restock shelves next friday)">
+                            <input type="text" id="quick-add-input" placeholder="Type naturally... (e.g., Restock next friday)">
                             <button type="submit" class="btn btn-dark w-100">Magic Add</button>
                         </form>
                     </div>
@@ -134,9 +134,9 @@
                 <div class="task-list-section box-container">
                     <div class="list-header">
                         <h3>Task Board</h3>
-                        <div class="search-sort-group" style="display: flex; gap: 10px; align-items: center;">
-                            <input type="text" id="task-search-input" placeholder="Search tasks..." style="padding: 8px 12px; font-size: 13px; max-width: 185px; margin-bottom: 0;">
-                            <select id="sort-select" style="padding: 8px 12px; font-size: 13px; max-width: 175px; margin-bottom: 0;">
+                        <div class="search-sort-group">
+                            <input type="text" id="task-search-input" class="tool-input" placeholder="Search tasks...">
+                            <select id="sort-select" class="tool-input">
                                 <option value="">Sort: Default</option>
                                 <option value="priority">Priority (High-Low)</option>
                                 <option value="due_date">Due Date</option>
@@ -155,10 +155,10 @@
                     </div>
 
                     <!-- Pagination Controls -->
-                    <div id="pagination-controls" class="pagination-controls hidden" style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
-                        <button id="prev-page-btn" class="btn btn-outline" style="padding: 6px 14px;">&larr; Previous</button>
-                        <span id="page-info" style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Page 1 of 1</span>
-                        <button id="next-page-btn" class="btn btn-outline" style="padding: 6px 14px;">Next &rarr;</button>
+                    <div id="pagination-controls" class="pagination-controls hidden">
+                        <button id="prev-page-btn" class="btn btn-outline btn-sm">&larr; Prev</button>
+                        <span id="page-info" class="page-info-text">Page 1 of 1</span>
+                        <button id="next-page-btn" class="btn btn-outline btn-sm">Next &rarr;</button>
                     </div>
                 </div>
             </div>
